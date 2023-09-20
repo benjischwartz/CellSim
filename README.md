@@ -20,6 +20,8 @@ A database would be added for the web server to persist user information between
 
 The frontend would provide a graphical interface for working with libcellml models (ball-and-stick type thing), as well as access to directly upload and edit libcellml XML files (which could then be viewable and editable in the GUI, possibly side by side).
 
+![diagram](images/diagram.png)
+
 ## Project Considerations
 
 
@@ -44,9 +46,9 @@ The frontend would provide a graphical interface for working with libcellml mode
                         * src/
             * src/
                 * CmakeLists.txt
-                * CellVizBackend.cpp
+                * CellSimBackend.cpp
             * js/
-                * CellViz/
+                * CellSim/
             * scripts/
                 * Random junk
 * Build and run libcellml C++ library from source
