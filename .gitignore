@@ -1,2 +1,3 @@
-build
-cpp/third_party/libcellml/.DS_Store
+build/
+.DS_Store
+compile_commands.json
