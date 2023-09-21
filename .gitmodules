@@ -1,0 +1,3 @@
+[submodule "webserver/wt"]
+	path = webserver/wt
+	url = https://github.com/emweb/wt
