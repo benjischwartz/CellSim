@@ -10,3 +10,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-sign-compare")
 
 add_subdirectory(third_party)
 add_subdirectory(samples)
+
+# Add targets here that will be targeted for CI.
+add_custom_target(ci_targets)
+add_dependencies(ci_targets hello)
+

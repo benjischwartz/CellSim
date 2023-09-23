@@ -16,4 +16,4 @@ jobs:
     - name: cmake
       run: cmake -S cpp -B cpp/build
     - name: make
-      run: cd cpp/build && make all
+      run: cd cpp/build && make ci_targets
