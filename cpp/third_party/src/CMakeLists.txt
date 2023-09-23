@@ -59,6 +59,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mathmldtd.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/model.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mongoose.c
   ${CMAKE_CURRENT_SOURCE_DIR}/namedentity.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/parentedentity.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/parser.cpp
@@ -97,6 +98,7 @@ set(GIT_API_HEADER_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/api/libcellml/issue.h
   ${CMAKE_CURRENT_SOURCE_DIR}/api/libcellml/logger.h
   ${CMAKE_CURRENT_SOURCE_DIR}/api/libcellml/model.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/api/libcellml/mongoose.h
   ${CMAKE_CURRENT_SOURCE_DIR}/api/libcellml/namedentity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/api/libcellml/parentedentity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/api/libcellml/parser.h
