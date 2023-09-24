@@ -14,4 +14,5 @@ add_subdirectory(samples)
 # Add targets here that will be targeted for CI.
 add_custom_target(ci_targets)
 add_dependencies(ci_targets hello)
+add_dependencies(ci_targets mongoose_sample)
 
