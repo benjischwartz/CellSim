@@ -1,6 +1,8 @@
 #include <iostream>
 
 #include "libcellml/analyser.h"
+#include "libcellml/model.h"
+#include "libcellml/printer.h"
 #include "mongoose/mongoose.h"
 
 
@@ -10,21 +12,7 @@
 // 3) Spin up a VueJs application with NodeJs or Python backend
 
 static const char *s_http_addr = "http://localhost:8000";  // HTTP port
-static const char *s_root_dir = "web_root";
-
-// minimal static server
-//static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
-//  if (ev == MG_EV_HTTP_MSG) {
-//    struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-//    if (mg_http_match_uri(hm, "/api/hello")) {              // On /api/hello requests,
-//      mg_http_reply(c, 200, "", "{%m:%d}\n",
-//                    MG_ESC("status"), 1);                   // Send dynamic JSON response
-//    } else {                                                // For all other URIs,
-//      struct mg_http_serve_opts opts = {.root_dir = "."};   // Serve files
-//      mg_http_serve_dir(c, hm, &opts);                      // From root_dir
-//    }
-//  }
-//}
+static const char *s_root_dir = "."; // root directory (for static request)
 
 // Taken from https://github.com/cesanta/mongoose/blob/master/examples/webui-rest/main.c
 
@@ -32,9 +20,21 @@ static const char *s_root_dir = "web_root";
 static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
   if (ev == MG_EV_HTTP_MSG) {
     struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-    if (mg_http_match_uri(hm, "/api/f1")) {
-      mg_http_reply(c, 200, "Content-Type: application/json\r\n", "{%m:%d}\n",
-                    MG_ESC("result"), 123);
+    if (mg_http_match_uri(hm, "/api/new_model")) {
+
+      // Create new model
+      auto model = libcellml::Model::create("new_model");
+      model->setId("new_model_id");
+
+      // Create serialised model string
+      auto printer = libcellml::Printer::create();
+      std::string serialisedModelString = printer->printModel(model);
+
+      // Send JSON response
+      char *json = mg_mprintf("{%m:%s}", MG_ESC("model"), serialisedModelString.c_str());
+      mg_http_reply(c, 200, "Content-Type: application/json\r\n", "%s\n", json);
+      free(json);
+
     } else if (mg_http_match_uri(hm, "/api/sum")) {
       // Attempt to fetch a JSON array from the body, hm->body
       struct mg_str json = hm->body;
@@ -44,7 +44,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
         // Success! create a JSON response
         mg_http_reply(c, 200, "Content-Type: application/json\r\n", "{%m:%g}\n",
                       MG_ESC("result"), num1 + num2);
-      }
+      } 
     } else {
       struct mg_http_serve_opts opts = {.root_dir = s_root_dir};
       mg_http_serve_dir(c, hm, &opts);
@@ -52,6 +52,10 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
   }
   (void) fn_data;
 }
+
+
+// Curl command to hit server: 
+// curl -X POST -d '[69, 420]' -H "Content-Type: application/json" http://localhost:8000/api/sum
 
 int main(void) {
 
