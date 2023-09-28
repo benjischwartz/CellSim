@@ -12,7 +12,7 @@
 // 3) Spin up a VueJs application with NodeJs or Python backend
 
 static const char *s_http_addr = "http://localhost:8000";  // HTTP port
-static const char *s_root_dir = "."; // root directory (for static request)
+static const char *s_root_dir = "./samples/hello/web_root"; // root directory 
 
 // Taken from https://github.com/cesanta/mongoose/blob/master/examples/webui-rest/main.c
 
@@ -20,11 +20,15 @@ static const char *s_root_dir = "."; // root directory (for static request)
 static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
   if (ev == MG_EV_HTTP_MSG) {
     struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-    if (mg_http_match_uri(hm, "/api/new_model")) {
+    if (mg_http_match_uri(hm, "/api/f1")) {
+     
+       // Extract headers
+      struct mg_str *model_name = mg_http_get_header(hm, "Model-Name") ;
+      struct mg_str *model_id = mg_http_get_header(hm, "Model-Id") ;
 
       // Create new model
-      auto model = libcellml::Model::create("new_model");
-      model->setId("new_model_id");
+      auto model = libcellml::Model::create(model_name->ptr);
+      model->setId(model_id->ptr);
 
       // Create serialised model string
       auto printer = libcellml::Printer::create();
