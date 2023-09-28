@@ -1,0 +1,4 @@
+add_executable(mongoose_sample mongoose_sample.cpp)
+
+target_link_libraries(mongoose_sample mongoose)
+target_include_directories(mongoose_sample PRIVATE $<TARGET_PROPERTY:mongoose,INTERFACE_INCLUDE_DIRECTORIES>)
