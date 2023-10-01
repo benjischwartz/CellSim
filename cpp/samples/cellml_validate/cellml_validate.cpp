@@ -40,11 +40,11 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
       // free(json);
       //
 
-        mg_http_reply(c, 200, "Content-Type: application/html\r\n"
-                              "Access-Control-Request-Headers: content-type\r\n"
+        mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                              "Access-Control-Allow-Headers: content-type\r\n"
                               "Access-Control-Request-Method: POST\r\n"
                               "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                              "{%m:%d}\n", MG_ESC("status"), 1); 
+							  "{\"Connected to backend!\": %d}", 200);
 
     } else if (mg_http_match_uri(hm, "/api/sum")) {
       // Attempt to fetch a JSON array from the body, hm->body
