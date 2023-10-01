@@ -4,10 +4,15 @@
     <pre v-else>{{ jsonData }}</pre>
   </div> <br /><br /> -->
   <div>
-    <h1>POST Method API</h1>
-    <textarea name="file" v-model="file"></textarea> <br /><br />
-    <button v-on:click="sendData()">Send file data</button> <br /><br />
-  </div>
+    <h1>CellSim API</h1>
+    <textarea name="file" v-model="file" placeholder="Paste File Data Here"></textarea> <br /><br />
+    <button v-on:click="sendData()">Validate</button> <br /><br />
+  </div> <br /><br />
+
+    <!-- Add text boxes for model name and model id -->
+    <input type="text" name="model_name" v-model="model_name" placeholder="Model Name" />
+    <input type="text" name="model_id" v-model="model_id" placeholder="Model ID" />
+    <button v-on:click="sendModel()">Upload</button> <br /><br />
 
     <!-- Display the result data in a panel -->
     <div v-if="resultData">
@@ -25,6 +30,8 @@ export default {
   {
     return {
       file: "",
+      model_name: "",
+      model_id: "",
       resultData: null, // Added data property to store result
     };
   },
@@ -37,11 +44,27 @@ export default {
       })
         // TODO: Extract data field from JSON string
 
-//      let resultObj = JSON.parse(result, (key, value) => {
-//        if (key === "data") {
-//          this.resultData = result;
-//        }
-//      })
+        //      let resultObj = JSON.parse(result, (key, value) => {
+        //        if (key === "data") {
+        //          this.resultData = result;
+        //        }
+        //      })
+      this.resultData = result;
+      console.warn("function called", this.file)
+    },
+    async sendModel()
+    {
+      let result = await axios.post("http://localhost:8000/api/create", {
+        model_name: this.model_name,
+        model_id: this.model_id
+      })
+        // TODO: Extract data field from JSON string
+
+        //      let resultObj = JSON.parse(result, (key, value) => {
+        //        if (key === "data") {
+        //          this.resultData = result;
+        //        }
+        //      })
       this.resultData = result;
       console.warn("function called", this.file)
     },
