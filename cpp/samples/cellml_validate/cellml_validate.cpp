@@ -22,30 +22,23 @@ static const char *s_http_addr = "http://localhost:8000";  // HTTP port
 static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
   if (ev == MG_EV_HTTP_MSG) {
     struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-    if (mg_http_match_uri(hm, "/api/validate")) {
+    if (mg_strcmp(hm->method, mg_str("OPTIONS")) == 0) {
+        mg_http_reply(c, 200, "Content-Type: application/json\r\n" 
+                            "Access-Control-Allow-Headers: content-type\r\n"
+                            "Access-Control-Request-Method: OPTIONS, POST\r\n"
+                            "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                            "{\"OPTIONS Request\": %d}", 0);
+    }
+    else if (mg_http_match_uri(hm, "/api/validate")) {
      
-      // Extract file from body
+      // Attempt to fetch a JSON string from the body, hm->body
       struct mg_str file = hm->body;
-      std::cout <<file.ptr<<std::endl;
-
-      // Why does this work, but it segfaults below...
-      struct mg_str json = mg_str("{\"a\":\"hi\"}");  // json = {"a": "hi"}
-      std::cout<<json.ptr<<std::endl;
-      char *str = mg_json_get_str(json, "$.a");        // str = "hi"
-      std::cout<<str<<std::endl;
-      free(str);
-
-      // This SEGFAULTS!!!!! WHY!!!
+      char *file_str = mg_json_get_str(file, "$.file");
+      std::cout << "Extracted string is...\n" << file_str << std::endl;
       
-      //char *file_str = mg_json_get_str(file, "$.file");
-      //std::cout<<file_str<<std::endl;
-      //free(file_str);
-
-
       // Create model
       auto parser = libcellml::Parser::create();
-      auto model = parser->parseModel(file.ptr);
-
+      auto model = parser->parseModel(file_str);
 
       // Create validator
       auto validator = libcellml::Validator::create();
@@ -65,28 +58,28 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
                         "Access-Control-Request-Method: POST\r\n"
                         "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
                         "{\"Number of issues\": %d}", numIssues);
-
     } else if (mg_http_match_uri(hm, "/api/create")) {
-          // Extract headers
-          struct mg_str *model_name = mg_http_get_header(hm, "Model-Name") ;
-          struct mg_str *model_id = mg_http_get_header(hm, "Model-Id") ;
+          // Extract model name and id
+          struct mg_str file = hm->body;
+          char *model_name = mg_json_get_str(file, "$.model_name");
+          char *model_id = mg_json_get_str(file, "$.model_id");
+          std::cout << "Extracted name is... " << model_name << std::endl;
+          std::cout << "Extracted id is... " << model_id << std::endl;
 
           // Create new model
-          auto model = libcellml::Model::create(model_name->ptr);
-          model->setId(model_id->ptr);
+          auto model = libcellml::Model::create(model_name);
+          model->setId(model_id);
 
           // Create serialised model string
           auto printer = libcellml::Printer::create();
           std::string serialisedModelString = printer->printModel(model);
 
           // Send JSON response
-          char *json = mg_mprintf("{%m:%s}", MG_ESC("model"), serialisedModelString.c_str());
           mg_http_reply(c, 200, "Content-Type: application/json\r\n"
                                 "Access-Control-Allow-Headers: content-type\r\n"
                                 "Access-Control-Request-Method: POST\r\n"
                                 "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                                "%s\n", json);
-          free(json);
+                                "{\"New model\": %s}", serialisedModelString.c_str());
     } else if (mg_http_match_uri(hm, "/api/sum")) {
       // Attempt to fetch a JSON array from the body, hm->body
       struct mg_str json = hm->body;
