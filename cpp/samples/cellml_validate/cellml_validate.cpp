@@ -12,7 +12,7 @@
 // 3) Spin up a VueJs application with NodeJs or Python backend
 
 static const char *s_http_addr = "http://localhost:8000";  // HTTP port
-static const char *s_root_dir = "./samples/hello/web_root"; // root directory 
+//static const char *s_root_dir = "./samples"; // root directory 
 
 // Taken from https://github.com/cesanta/mongoose/blob/master/examples/webui-rest/main.c
 
@@ -39,8 +39,12 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
       // mg_http_reply(c, 200, "Content-Type: application/json\r\n", "%s\n", json);
       // free(json);
       //
-      mg_http_reply(c, 200, "", "{%m:%d}\n",
-                    MG_ESC("status"), 1); 
+
+        mg_http_reply(c, 200, "Content-Type: application/html\r\n"
+                              "Access-Control-Request-Headers: content-type\r\n"
+                              "Access-Control-Request-Method: POST\r\n"
+                              "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                              "{%m:%d}\n", MG_ESC("status"), 1); 
 
     } else if (mg_http_match_uri(hm, "/api/sum")) {
       // Attempt to fetch a JSON array from the body, hm->body
@@ -53,8 +57,12 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
                       MG_ESC("result"), num1 + num2);
       } 
     } else {
-      struct mg_http_serve_opts opts = {.root_dir = s_root_dir};
-      mg_http_serve_dir(c, hm, &opts);
+      // struct mg_http_serve_opts opts = {.root_dir = s_root_dir};
+      // mg_http_serve_dir(c, hm, &opts);
+        mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                              "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+							  "{\"Connected to backend!\": %d}", 200);
+
     }
   }
   (void) fn_data;

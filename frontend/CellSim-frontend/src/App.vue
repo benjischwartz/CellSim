@@ -2,6 +2,14 @@
 import { RouterLink, RouterView } from 'vue-router'
 import HelloWorld from './components/HelloWorld.vue'
 import TextInput from './components/TextInput.vue'
+import { ref } from 'vue'
+//import ResponseDisplay from './components/ResponseDisplay.vue'
+
+const responseData = ref(null)
+const displayResponse = (data) => {
+    responseData.value = data;
+}
+
 </script>
 
 <template>
@@ -11,13 +19,18 @@ import TextInput from './components/TextInput.vue'
     <div class="wrapper">
       <HelloWorld msg="Welcome to CellSim!" />
 
+	  <div id="app">
+		<TextInput @response="displayResponse" />
+		<!-- Only show the ResponseDisplay component when responseData is available -->
+		<!--<ResponseDisplay v-if="responseData" :responseData="responseData" /> -->
+	  </div>
+
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
       </nav>
     </div>
   </header>
-  <TextInput />
   <RouterView />
 </template>
 
