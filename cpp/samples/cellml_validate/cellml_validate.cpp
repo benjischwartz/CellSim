@@ -3,6 +3,8 @@
 #include "libcellml/analyser.h"
 #include "libcellml/model.h"
 #include "libcellml/printer.h"
+#include "libcellml/validator.h"
+#include "libcellml/parser.h"
 #include "mongoose.h"
 
 
@@ -22,30 +24,69 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
     struct mg_http_message *hm = (struct mg_http_message *) ev_data;
     if (mg_http_match_uri(hm, "/api/validate")) {
      
-      //// Extract headers
-      //struct mg_str *model_name = mg_http_get_header(hm, "Model-Name") ;
-      //struct mg_str *model_id = mg_http_get_header(hm, "Model-Id") ;
+      // Extract file from body
+      struct mg_str file = hm->body;
+      std::cout <<file.ptr<<std::endl;
 
-      //// Create new model
-      //auto model = libcellml::Model::create(model_name->ptr);
-      //model->setId(model_id->ptr);
+      // Why does this work, but it segfaults below...
+      struct mg_str json = mg_str("{\"a\":\"hi\"}");  // json = {"a": "hi"}
+      std::cout<<json.ptr<<std::endl;
+      char *str = mg_json_get_str(json, "$.a");        // str = "hi"
+      std::cout<<str<<std::endl;
+      free(str);
 
-      //// Create serialised model string
-      //auto printer = libcellml::Printer::create();
-      //std::string serialisedModelString = printer->printModel(model);
+      // This SEGFAULTS!!!!! WHY!!!
+      
+      //char *file_str = mg_json_get_str(file, "$.file");
+      //std::cout<<file_str<<std::endl;
+      //free(file_str);
 
-      // Send JSON response
-      // char *json = mg_mprintf("{%m:%s}", MG_ESC("model"), serialisedModelString.c_str());
-      // mg_http_reply(c, 200, "Content-Type: application/json\r\n", "%s\n", json);
-      // free(json);
-      //
 
-        mg_http_reply(c, 200, "Content-Type: application/json\r\n"
-                              "Access-Control-Allow-Headers: content-type\r\n"
-                              "Access-Control-Request-Method: POST\r\n"
-                              "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-							  "{\"Connected to backend!\": %d}", 200);
+      // Create model
+      auto parser = libcellml::Parser::create();
+      auto model = parser->parseModel(file.ptr);
 
+
+      // Create validator
+      auto validator = libcellml::Validator::create();
+      validator->validateModel(model);
+
+      // Retrieve number of issues from validator
+      size_t numIssues = validator->issueCount();
+
+
+      // Create serialised model string
+      auto printer = libcellml::Printer::create();
+      std::string serialisedModelString = printer->printModel(model);
+
+
+      mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                        "Access-Control-Allow-Headers: content-type\r\n"
+                        "Access-Control-Request-Method: POST\r\n"
+                        "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                        "{\"Number of issues\": %d}", numIssues);
+
+    } else if (mg_http_match_uri(hm, "/api/create")) {
+          // Extract headers
+          struct mg_str *model_name = mg_http_get_header(hm, "Model-Name") ;
+          struct mg_str *model_id = mg_http_get_header(hm, "Model-Id") ;
+
+          // Create new model
+          auto model = libcellml::Model::create(model_name->ptr);
+          model->setId(model_id->ptr);
+
+          // Create serialised model string
+          auto printer = libcellml::Printer::create();
+          std::string serialisedModelString = printer->printModel(model);
+
+          // Send JSON response
+          char *json = mg_mprintf("{%m:%s}", MG_ESC("model"), serialisedModelString.c_str());
+          mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                                "Access-Control-Allow-Headers: content-type\r\n"
+                                "Access-Control-Request-Method: POST\r\n"
+                                "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                                "%s\n", json);
+          free(json);
     } else if (mg_http_match_uri(hm, "/api/sum")) {
       // Attempt to fetch a JSON array from the body, hm->body
       struct mg_str json = hm->body;

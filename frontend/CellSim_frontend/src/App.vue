@@ -16,15 +16,15 @@ export default {
   data()
   {
     return {
-      file:''
-    }
+      file: "",
+    };
   },
 
   methods:{
     async sendData()
     {
-      let result = await axios.post("http://localhost:8000/api/validate",{
-        file:this.file
+      let result = await axios.post("http://localhost:8000/api/validate", {
+        file: this.file
       })
       console.warn("function called", this.file)
     },
