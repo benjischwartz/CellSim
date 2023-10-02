@@ -17,7 +17,7 @@
     <!-- Display the result data in a panel -->
     <div v-if="resultData">
       <h2>Result Data</h2>
-      <pre>{{ resultData }}</pre>
+      <pre>{{ resultData.data }}</pre>
     </div>
 
 </template>

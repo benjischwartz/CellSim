@@ -5,9 +5,10 @@
 #include "libcellml/printer.h"
 #include "libcellml/validator.h"
 #include "libcellml/parser.h"
+#include "libcellml/issue.h"
 #include "mongoose.h"
 
-
+std::string create_issue_list(libcellml::ValidatorPtr &validator);
 //NEXT STEPS:
 // 1) Build a toy C++ Webserver
 // 2) Start designing API routes for cellml server
@@ -46,18 +47,13 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
 
       // Retrieve number of issues from validator
       size_t numIssues = validator->issueCount();
-
-
-      // Create serialised model string
-      auto printer = libcellml::Printer::create();
-      std::string serialisedModelString = printer->printModel(model);
-
+      std::string issueList = create_issue_list(validator);
 
       mg_http_reply(c, 200, "Content-Type: application/json\r\n"
                         "Access-Control-Allow-Headers: content-type\r\n"
                         "Access-Control-Request-Method: POST\r\n"
                         "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                        "{\"Number of issues\": %d}", numIssues);
+                        "{\"Number of issues\": %d, \"Issue List\": %s}", numIssues, issueList.c_str());
     } else if (mg_http_match_uri(hm, "/api/create")) {
           // Extract model name and id
           struct mg_str file = hm->body;
@@ -118,3 +114,49 @@ int main(void) {
 	mg_mgr_free(&mgr);
 	return 0;
 }
+
+std::string create_issue_list(libcellml::ValidatorPtr &validator) {
+    std::string issueList;
+    for (size_t e = 0; e < validator->issueCount(); ++e) {
+        libcellml::IssuePtr validatorIssue = validator->issue(e);
+        std::string issueSpecificationReference = validatorIssue->referenceHeading();
+        issueList+=" Validator issue[";
+        issueList+= std::to_string(e);
+        issueList+= "]:\n";
+        issueList+="   Description: ";
+        issueList+= validatorIssue->description();
+        issueList+= "\n";
+        issueList+="   Type of item stored: ";
+        issueList+= cellmlElementTypeAsString(validatorIssue->item()->type());
+        issueList+="\n";
+        issueList+="   URL: ";
+        issueList+=validatorIssue->url();
+        issueList+="\n";
+        if (issueSpecificationReference != "") {
+            issueList += "     See section ";
+            issueList += issueSpecificationReference;
+            issueList += " in the CellML specification.\n";
+        }
+    }
+    return issueList;
+}
+
+
+//enum class CellmlElementType
+//{
+//    COMPONENT,
+//    COMPONENT_REF,
+//    CONNECTION,
+//    ENCAPSULATION,
+//    IMPORT,
+//    MAP_VARIABLES,
+//    MATH,
+//    MODEL,
+//    RESET,
+//    RESET_VALUE,
+//    TEST_VALUE,
+//    UNDEFINED,
+//    UNIT,
+//    UNITS,
+//    VARIABLE,
+//};
