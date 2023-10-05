@@ -57,6 +57,8 @@ export default {
         edit_type: "add_units",
         item_name: this.item_name,
         file: this.resultData.data,
+        model_name: this.model_name,
+        model_id: this.model_id
       })
       this.resultData = result;
       console.warn("function called", this.file)

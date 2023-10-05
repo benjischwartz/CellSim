@@ -87,13 +87,19 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           std::string edit_type = mg_json_get_str(file, "$.edit_type");
           std::string item_name = mg_json_get_str(file, "$.item_name");
           std::string file_str = mg_json_get_str(file, "$.file");
+          std::string model_name = mg_json_get_str(file, "$.model_name");
+          std::string model_id = mg_json_get_str(file, "$.model_id");
           std::cout << "Extracted edit is... " << edit_type << std::endl;
-          std::cout << "Extracted name is... " << item_name << std::endl;
+          std::cout << "Extracted item name is... " << item_name << std::endl;
           std::cout << "Extracted file is... " << file_str << std::endl;
+          std::cout << "Extracted model name is... " << model_name << std::endl;
+          std::cout << "Extracted model id is... " << model_id << std::endl;
           
           // Create model
           auto parser = libcellml::Parser::create();
           auto model = parser->parseModel(file_str);
+          model->setName(model_name);
+          model->setId(model_id);
 
           if (edit_type.compare("add_units") == 0) {
               std::cout << "HERE\n";
