@@ -6,6 +6,7 @@
 #include "libcellml/validator.h"
 #include "libcellml/parser.h"
 #include "libcellml/issue.h"
+#include "libcellml/units.h"
 #include "mongoose.h"
 
 std::string create_issue_list(libcellml::ValidatorPtr &validator);
@@ -76,16 +77,45 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
                                 "Access-Control-Request-Method: POST\r\n"
                                 "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
                                 "{\"New model\": %s}", serialisedModelString.c_str());
-    } else if (mg_http_match_uri(hm, "/api/sum")) {
-      // Attempt to fetch a JSON array from the body, hm->body
-      struct mg_str json = hm->body;
-      double num1, num2;
-      if (mg_json_get_num(json, "$[0]", &num1) &&
-          mg_json_get_num(json, "$[1]", &num2)) {
-        // Success! create a JSON response
-        mg_http_reply(c, 200, "Content-Type: application/json\r\n", "{%m:%g}\n",
-                      MG_ESC("result"), num1 + num2);
-      } 
+    } else if (mg_http_match_uri(hm, "/api/edit")) {
+          // Extract model data and editing info
+          //    Edit options:
+              //    1) Add/remove units
+              //    2) Add/remove component
+          //    If unit already exits or invalid name ==> error
+          struct mg_str file = hm->body;
+          std::string edit_type = mg_json_get_str(file, "$.edit_type");
+          std::string item_name = mg_json_get_str(file, "$.item_name");
+          std::string file_str = mg_json_get_str(file, "$.file");
+          std::cout << "Extracted edit is... " << edit_type << std::endl;
+          std::cout << "Extracted name is... " << item_name << std::endl;
+          std::cout << "Extracted file is... " << file_str << std::endl;
+          
+          // Create model
+          auto parser = libcellml::Parser::create();
+          auto model = parser->parseModel(file_str);
+
+          if (edit_type.compare("add_units") == 0) {
+              std::cout << "HERE\n";
+              auto new_unit = libcellml::Units::create(item_name);
+              model->addUnits(new_unit);
+          } else if (edit_type.compare("remove_unit")) {
+          } else if (edit_type.compare("add_component")) {
+          } else if (edit_type.compare("remove_component")) {
+          } else {
+              // Unknown command
+          }
+
+          // Create serialised model string
+          auto printer = libcellml::Printer::create();
+          std::string serialisedModelString = printer->printModel(model);
+
+          // Send JSON response
+          mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                                "Access-Control-Allow-Headers: content-type\r\n"
+                                "Access-Control-Request-Method: POST\r\n"
+                                "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                                "{\"Updated model\": %s}", serialisedModelString.c_str());
     } else {
       // struct mg_http_serve_opts opts = {.root_dir = s_root_dir};
       // mg_http_serve_dir(c, hm, &opts);

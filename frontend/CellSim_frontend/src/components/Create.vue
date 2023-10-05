@@ -5,12 +5,14 @@
     <input type="text" name="model_name" v-model="model_name" placeholder="Model Name" />
     <input type="text" name="model_id" v-model="model_id" placeholder="Model ID" />
     <button v-on:click="sendModel()">Upload</button> <br /><br />
-  </div>
+  </div> <br /><br />
 
     <!-- Display the result data in a panel -->
     <div v-if="resultData">
       <h2>Result Data</h2>
       <pre>{{ resultData.data }}</pre>
+      <input type="text" name="item_name" v-model="item_name" placeholder="Units Name" />
+      <button v-on:click="addUnits()">Add</button><br /><br />
     </div>
 
 </template>
@@ -25,6 +27,8 @@ export default {
       file: "",
       model_name: "",
       model_id: "",
+      item_name: "",
+      edit_type: "",
       resultData: null, // Added data property to store result
     };
   },
@@ -43,6 +47,16 @@ export default {
       let result = await axios.post("http://localhost:8000/api/create", {
         model_name: this.model_name,
         model_id: this.model_id
+      })
+      this.resultData = result;
+      console.warn("function called", this.file)
+    },
+    async addUnits()
+    {
+      let result = await axios.post("http://localhost:8000/api/edit", {
+        edit_type: "add_units",
+        item_name: this.item_name,
+        file: this.resultData.data,
       })
       this.resultData = result;
       console.warn("function called", this.file)
