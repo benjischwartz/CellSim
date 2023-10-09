@@ -7,18 +7,12 @@
 #include "libcellml/parser.h"
 #include "libcellml/issue.h"
 #include "libcellml/units.h"
+#include "libcellml/component.h"
 #include "mongoose.h"
 
 std::string create_issue_list(libcellml::ValidatorPtr &validator);
-//NEXT STEPS:
-// 1) Build a toy C++ Webserver
-// 2) Start designing API routes for cellml server
-// 3) Spin up a VueJs application with NodeJs or Python backend
 
 static const char *s_http_addr = "http://localhost:8000";  // HTTP port
-//static const char *s_root_dir = "./samples"; // root directory 
-
-// Taken from https://github.com/cesanta/mongoose/blob/master/examples/webui-rest/main.c
 
 // Dynamic RESTful server
 static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
@@ -49,6 +43,16 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
       // Retrieve number of issues from validator
       size_t numIssues = validator->issueCount();
       std::string issueList = create_issue_list(validator);
+
+      // get component count
+      size_t numComponents = model->componentCount();
+      std::cout << "Model has " << numComponents << " components.\n";            
+      // List components
+      for (size_t i = 0; i < numComponents; ++i) {
+          auto component = model->component(i);
+          std::cout << "extracting component... " << component->name() << std::endl;
+
+      }
 
       mg_http_reply(c, 200, "Content-Type: application/json\r\n"
                         "Access-Control-Allow-Headers: content-type\r\n"
@@ -112,6 +116,16 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
               // Unknown command
           }
 
+          // get component count
+          size_t numComponents = model->componentCount();
+          std::cout << "Model has " << numComponents << " components.\n";            
+          // List components
+          for (size_t i = 0; i < numComponents; ++i) {
+              auto component = model->component(i);
+              std::cout << "extracting component...\n";
+          }
+
+
           // Create serialised model string
           auto printer = libcellml::Printer::create();
           std::string serialisedModelString = printer->printModel(model);
@@ -135,8 +149,6 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
 }
 
 
-// Curl command to hit server: 
-// curl -X POST -d '[69, 420]' -H "Content-Type: application/json" http://localhost:8000/api/sum
 
 int main(void) {
 
@@ -196,3 +208,6 @@ std::string create_issue_list(libcellml::ValidatorPtr &validator) {
 //    UNITS,
 //    VARIABLE,
 //};
+
+// Curl command to hit server: 
+// curl -X POST -d '[69, 420]' -H "Content-Type: application/json" http://localhost:8000/api/sum
