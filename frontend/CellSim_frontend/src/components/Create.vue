@@ -11,8 +11,10 @@
     <div v-if="resultData">
       <h2>Result Data</h2>
       <pre>{{ resultData.data }}</pre>
-      <input type="text" name="item_name" v-model="item_name" placeholder="Units Name" />
+      <input type="text" name="units_name" v-model="units_name" placeholder="Units Name" />
       <button v-on:click="addUnits()">Add</button><br /><br />
+      <input type="text" name="component_name" v-model="component_name" placeholder="Component Name" />
+      <button v-on:click="addComponent()">Add</button><br /><br />
     </div>
 
 </template>
@@ -27,7 +29,8 @@ export default {
       file: "",
       model_name: "",
       model_id: "",
-      item_name: "",
+      units_name: "",
+      component_name: "",
       edit_type: "",
       resultData: null, // Added data property to store result
     };
@@ -55,7 +58,19 @@ export default {
     {
       let result = await axios.post("http://localhost:8000/api/edit", {
         edit_type: "add_units",
-        item_name: this.item_name,
+        units_name: this.units_name,
+        file: this.resultData.data,
+        model_name: this.model_name,
+        model_id: this.model_id
+      })
+      this.resultData = result;
+      console.warn("function called", this.file)
+    },
+    async addComponent()
+    {
+      let result = await axios.post("http://localhost:8000/api/edit", {
+        edit_type: "add_component",
+        component_name: this.component_name,
         file: this.resultData.data,
         model_name: this.model_name,
         model_id: this.model_id
