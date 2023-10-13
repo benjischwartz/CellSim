@@ -17,6 +17,17 @@
       <button v-on:click="addComponent()">Add</button><br /><br />
     </div>
 
+	  <!-- Add the "Visualize" toggle -->
+	  <label>
+	    Visualize
+	    <input type="checkbox" v-model="visualise" @click="toggleVisualise()" />
+	  </label>
+
+	  <!-- Add a visualization element (e.g., a div) that is conditionally displayed -->
+	  <div v-if="visualise">
+	    <!-- Add your visualization content here -->
+	  </div>
+
 </template>
 
 <script>
@@ -32,24 +43,18 @@ export default {
       units_name: "",
       component_name: "",
       edit_type: "",
-      resultData: null, // Added data property to store result
+      visualise: false,
+      resultData: null, // data property to store result
     };
   },
 
   methods:{
-    async sendData()
-    {
-      let result = await axios.post("http://localhost:8000/api/validate", {
-        file: this.file
-      })
-      this.resultData = result;
-      console.warn("function called", this.file)
-    },
     async sendModel()
     {
       let result = await axios.post("http://localhost:8000/api/create", {
         model_name: this.model_name,
-        model_id: this.model_id
+        model_id: this.model_id,
+        visualise: this.visualise
       })
       this.resultData = result;
       console.warn("function called", this.file)
@@ -61,7 +66,8 @@ export default {
         units_name: this.units_name,
         file: this.resultData.data,
         model_name: this.model_name,
-        model_id: this.model_id
+        model_id: this.model_id,
+        visualise: this.visualise
       })
       this.resultData = result;
       console.warn("function called", this.file)
@@ -73,7 +79,16 @@ export default {
         component_name: this.component_name,
         file: this.resultData.data,
         model_name: this.model_name,
-        model_id: this.model_id
+        model_id: this.model_id,
+        visualise: this.visualise
+      })
+      this.resultData = result;
+      console.warn("function called", this.file)
+    },
+    async toggleVisualise()
+    {
+      let result = await axios.post("http://localhost:8000/api/togglelocal", {
+        visualise: !(this.visualise)
       })
       this.resultData = result;
       console.warn("function called", this.file)
