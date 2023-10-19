@@ -1,53 +1,42 @@
-<template> 
+<template>
   <div>
-    <h1>Visualise CellML File</h1>
+    <h1>Visualize CellML File</h1>
     <!-- Add input for file upload -->
-	<input type="file" @change="handleFileUpload" accept=".xml" />
+    <input type="file" @change="handleFileUpload" accept=".xml" />
     <br /><br />
     <!-- Add text boxes for model name and model id -->
     <textarea name="file" v-model="file" placeholder="Or paste File Data Here"></textarea> <br /><br />
-    <button @click="sendData()">Visualise</button> <br /><br />
+    <button @click="sendData()">Visualize</button> <br /><br />
   </div>
 
-    <!-- Display the result data in a panel -->
-    <br /><br />
-    <div v-if="resultData">
-      <h2>Result Data</h2>
-      <pre>{{ resultData.data}}</pre>
-    </div>
-    <br /><br />
-    <!-- Add an SVG container for visualization -->
-	<div id="xml-visualization-container"></div>
+  <!-- Display the result data in a panel -->
+  <br /><br />
+  <div v-if="resultData">
+    <h2>Result Data</h2>
+    <pre>{{ resultData.data }}</pre>
+  </div>
+  <br /><br />
 
-      <!-- Add an iframe to embed the Tidy Tree visualization from 
-		Observable with XML data in URL parameter -->
-    <iframe
-      width="800"
-      height="600"
-      :src="yourObservableEmbedURL"
-      frameborder="0"
-    ></iframe>
-
+  <!-- Add an SVG container for visualization -->
+  <div id="xml-visualization-container"></div>
 </template>
 
 <script>
-import axios from 'axios'
-import * as d3 from 'd3'
+import axios from 'axios';
+import * as d3 from 'd3';
+import xml2js from 'xml2js';
+
 export default {
-  name: "Validate",
-  data()
-  {
+  name: "Visualise",
+  data() {
     return {
       file: "",
-      model_name: "",
-      model_id: "",
-      resultData: null, // Added data property to store result
-	  yourObservableEmbedURL: "",
+      resultData: null,
+      xmlData: "",
     };
   },
-
-  methods:{
-	handleFileUpload(event) {
+  methods: {
+    handleFileUpload(event) {
       const selectedFile = event.target.files[0];
       if (selectedFile) {
         const reader = new FileReader();
@@ -55,89 +44,105 @@ export default {
           this.file = e.target.result;
         };
         reader.readAsText(selectedFile);
-      }	
-	},
-    async sendData()
-    {
+      }
+    },
+    async sendData() {
       let result = await axios.post("http://localhost:8000/api/visualise", {
         file: this.file
-      })
+      });
       this.resultData = result;
-      console.warn("function called", this.file)
+      this.xmlData = this.file;
+      console.warn("function called", this.file);
 
-	  this.renderXMLData(this.file);
-	  this.yourObservableEmbedURL = "https://observablehq.com/d/5dfc029938a00648?xmlData=${encodeURIComponent(this.file)}";
+      this.visualizeData();
     },
-
-	renderXMLData(xmlData) {
-      console.log(xmlData);
-	  const svg = d3.select("#xml-visualization-container").append("svg")
-		.attr("width", 600)
-		.attr("height", 400);
-
-	  // Parse the XML data
-	  const parser = new DOMParser();
-	  const xmlDoc = parser.parseFromString(xmlData, "text/xml");
-
-	  // Create a hierarchical layout for the XML tree
-	  const treeLayout = d3.tree().size([400, 300]);
-	  const treeData = d3.hierarchy(this.xmlToD3Hierarchy(xmlDoc.documentElement));
-
-	  // Create a group element to hold the tree elements
-	  const treeGroup = svg.append("g")
-		.attr("transform", "translate(100, 50)");
-
-	  // Create tree links (edges)
-	  const links = treeGroup.selectAll(".link")
-		.data(treeLayout(treeData).links())
-		.enter().append("path")
-		.attr("class", "link")
-		.attr("d", d => {
-		  return `M${d.source.x},${d.source.y}C${d.source.x},${(d.source.y + d.target.y) / 2} ${d.target.x},${(d.source.y + d.target.y) / 2} ${d.target.x},${d.target.y}`;
-		});
-
-	  // Create tree nodes (circles)
-	  const nodes = treeGroup.selectAll(".node")
-		.data(treeData.descendants())
-		.enter().append("g")
-		.attr("class", "node")
-		.attr("transform", d => `translate(${d.x},${d.y})`);
-
-	  nodes.append("circle")
-		.attr("r", 10);
-
-	  nodes.append("text")
-		.attr("dy", ".35em")
-		.attr("y", d => (d.children ? -20 : 20))
-		.style("text-anchor", "middle")
-		.text(d => d.data.nodeName);
-
-	  function collapse(d) {
-		if (d.children) {
-		  d._children = d.children;
-		  d._children.forEach(collapse);
-		  d.children = null;
-		}
-	  }
-
-	  treeData.children.forEach(collapse);
-	},
-	xmlToD3Hierarchy(node) {
-	  const data = {
-		nodeName: node.nodeName,
+	transformData(xmlObject) {
+	  const root = {
+	    name: "root",
+	    children: [],
 	  };
-
-	  if (node.nodeType === 3) { // Text nodes
-		data.nodeValue = node.nodeValue.trim();
-	  } else if (node.nodeType === 1 && node.childNodes.length > 0) { // Element nodes with children
-		data.children = Array.from(node.childNodes)
-		  .filter(childNode => childNode.nodeType === 1 || childNode.nodeType === 3)
-		  .map(childNode => this.xmlToD3Hierarchy(childNode));
+	
+	  function transformNode(node) {
+	    const newNode = {
+	      name: node.$.name || "Unnamed Node",
+	      children: [],
+	    };
+	
+	    if (node.variable) {
+	      newNode.children = node.variable.map(transformNode);
+	    } else if (node.component) {
+	      newNode.children = node.component.map(transformNode);
+	    }
+	
+	    return newNode;
 	  }
-
-	  return data;
+	
+	  if (Array.isArray(xmlObject.model)) {
+	    root.children = xmlObject.model.map(transformNode);
+	  } else if (xmlObject.model) {
+        root.children.push(transformNode(xmlObject.model));
+      }
+	
+	  return root;
 	},
+	
+	visualizeData() {
+	  if (!this.xmlData) {
+	    console.error("No XML data to visualize.");
+	    return;
+	  }
+	
+	  xml2js.parseString(this.xmlData, (err, result) => {
+	    if (!err) {
+	      const treeData = this.transformData(result);
 
+          // calculate tree dimensions
+      	  const treeLayout = d3.tree().size([1200, 800]); // Adjust these values as needed
+      	  const treeRoot = d3.hierarchy(treeData);
+      	  const treeLayoutData = treeLayout(treeRoot);
+
+		  // Calculate the required SVG container dimensions
+      	  const treeWidth = treeLayoutData.descendants().length * 200; // Adjust as needed
+      	  const treeHeight = treeLayoutData.height * 200; // Adjust as needed
+	
+	      d3.select("#xml-visualization-container").html("");
+	
+	      const svg = d3
+	        .select("#xml-visualization-container")
+	        .append("svg")
+	        .attr("width", treeWidth)
+	        .attr("height", treeHeight);
+	
+	      const links = svg
+	        .selectAll(".link")
+	        .data(treeLayoutData.links())
+	        .enter()
+	        .append("path")
+	        .attr("class", "link")
+	        .attr("d", (d) => {
+                return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`
+            });
+	
+	      const nodes = svg
+	        .selectAll(".node")
+	        .data(treeLayoutData.descendants())
+	        .enter()
+	        .append("g")
+	        .attr("class", "node")
+	        .attr("transform", (d) => `translate(${d.x},${d.y})`);
+	
+	      nodes.append("circle").attr("r", 10);
+	
+	      nodes
+	        .append("text")
+	        .attr("dy", ".35em")
+	        .attr("y", (d) => (d.children ? -20 : 20))
+	        .style("text-anchor", "middle")
+	        .text((d) => d.data.name);
+	    }
+	  });
+	},
   },
 };
 </script>
+
