@@ -17,13 +17,18 @@
   </div>
   <br /><br />
 
-  <div class="rectangle" v-for="(text, index) in components" :key="index">
-    {{ text }}
-  </div>
+  <div class="rectangle" v-for="component in components">
+    {{ component.$.name }}
+    <div v-if="component.variable">
+      <div v-for="variable in component.variable">
+         |--- {{ variable.$.name }}
+      </div>
+   </div>
+ </div>
 
-  <div class="rectangle" v-for="(text, index) in variables" :key="index">
-    {{ text }}
-  </div>
+  <div v-for="connection in connections">
+    {{ connection.map_components[0].$.component_2 }} -- {{ connection.map_components[0].$.component_1 }} 
+ </div>
 
 </template>
 
@@ -40,7 +45,7 @@ export default {
       resultData: null,
       jsData: "",
       components: [],
-      variables: [],
+      connections: [],
     };
   },
   methods: {
@@ -73,19 +78,9 @@ export default {
 
     visualizeData() {
       // creates list of components
-      this.jsData.model.component.forEach((component) => {
-        this.components.push(component.$.name);
-        if (component.variable) {
-          // if component has variables, add them to list
-          console.log("has variables");
-          component.variable.forEach((variable) => {
-            this.variables.push(variable.$.name);
-          })
-        }    
-      })
-
-      // creates list of variables for each component
-      
+      this.components = this.jsData.model.component;
+      // creates list of connections
+      this.connections = this.jsData.model.connection;
     },
   },
 }
@@ -94,12 +89,17 @@ export default {
 
 <style>
 .rectangle {
-  width: 200px;
-  height: 100px;
+  width: 250px;
+  height: 200px;
   background-color: lightblue;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 10px;
+  margin: 20px;
+}
+
+.connections line {
+  stroke: black;
+  stroke-width: 2;
 }
 </style>
