@@ -19,7 +19,7 @@
 
     
   <!-- Add an SVG container for visualization -->
-  <div id="xml-visualization-container"></div>
+  <div id="svg-container"></div>
 
 </template>
 
@@ -65,108 +65,95 @@ export default {
       });
       this.visualizeData();
     },
-    transformData() {
-      const root = {
-        name: "root",
-        children: [],
-      };
 
-      function transformNode(node) {
-        const newNode = {
-          name: node.$.name || "Unnamed Node",
-          children: [],
-        };
+    visualizeData() {
+      const dx = 12;
+      const dy = 120;
+      var tree = d3.tree().nodeSize([dx, dy]);
+      var treeLink = d3.linkHorizontal().x(d => d.y).y(d => d.x);
+      function graph(root, {
+        label = d => d.data.id, 
+        highlight = () => false,
+        marginLeft = 40
+      } = {}) {
+        root = tree(root);
 
-        if (node.variable) {
-          newNode.children = node.variable.map(transformNode);
-        } else if (node.component) {
-          newNode.children = node.component.map(transformNode);
-        }
-
-        return newNode;
-      }
-
-      // Create a function to recursively handle variables within components
-      function handleVariables(component) {
-        const componentNode = {
-          name: component.$.name || "Unnamed Component",
-          children: [],
-        };
-
-        if (component.variable) {
-          componentNode.children = component.variable.map(transformNode);
-        }
-
-        return componentNode;
-      }
-
-      if (this.treeData.model) {
-        // Add model's children
-        root.children.push(transformNode(this.treeData.model));
-
-        // Handle variables within components and add them as children of the respective components
-        if (this.treeData.model.component) {
-          this.treeData.model.component.forEach((component) => {
-            const componentNode = handleVariables(component);
-            root.children[0].children.push(componentNode);
-          });
-        }
-      }
-
-      return root;
-    },
-	visualizeData() {
-	  if (!this.treeData) {
-	    console.error("No XML data to visualize.");
-	    return;
-	  }
-	
-      const transformed = this.transformData();
-
-      // calculate tree dimensions
-      const treeLayout = d3.tree().size([1200, 800]); // Adjust these values as needed
-      const treeRoot = d3.hierarchy(transformed);
-      const treeLayoutData = treeLayout(treeRoot);
-
-      // Calculate the required SVG container dimensions
-      const treeWidth = treeLayoutData.descendants().length * 200; // Adjust as needed
-      const treeHeight = treeLayoutData.height * 200; // Adjust as needed
-
-      d3.select("#xml-visualization-container").html("");
-
-      const svg = d3
-        .select("#xml-visualization-container")
-        .append("svg")
-        .attr("width", treeWidth)
-        .attr("height", treeHeight);
-
-      const links = svg
-        .selectAll(".link")
-        .data(treeLayoutData.links())
-        .enter()
-        .append("path")
-        .attr("class", "link")
-        .attr("d", (d) => {
-            return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`
+        let x0 = Infinity;
+        let x1 = -x0;
+        root.each(d => {
+          if (d.x > x1) x1 = d.x;
+          if (d.x < x0) x0 = d.x;
         });
 
-      const nodes = svg
-        .selectAll(".node")
-        .data(treeLayoutData.descendants())
-        .enter()
-        .append("g")
-        .attr("class", "node")
-        .attr("transform", (d) => `translate(${d.x},${d.y})`);
+        const treeWidth = x1 - x0 + dx * 2;
+        const treeHeight = root.height * dy;
 
-      nodes.append("circle").attr("r", 10);
+        // Adjust the viewBox and container size based on the tree dimensions
+        const width = treeWidth + marginLeft;
+        const height = treeHeight + dx;
 
-      nodes
-        .append("text")
-        .attr("dy", ".35em")
-        .attr("y", (d) => (d.children ? -20 : 20))
-        .style("text-anchor", "middle")
-        .text((d) => d.data.name);
-	},
+        const svg = d3.create("svg")
+            .attr("viewBox", [0, 0, width, height])
+            .style("overflow", "visible");
+        
+        const g = svg.append("g")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", 10)
+            .attr("transform", `translate(${marginLeft},${dx})`);
+          
+        const link = g.append("g")
+          .attr("fill", "none")
+          .attr("stroke", "#555")
+          .attr("stroke-opacity", 0.4)
+          .attr("stroke-width", 1.5)
+        .selectAll("path")
+          .data(root.links())
+          .join("path")
+            .attr("stroke", d => highlight(d.source) && highlight(d.target) ? "red" : null)
+            .attr("stroke-opacity", d => highlight(d.source) && highlight(d.target) ? 1 : null)
+            .attr("d", treeLink);
+        
+        const node = g.append("g")
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-width", 3)
+          .selectAll("g")
+          .data(root.descendants())
+          .join("g")
+            .attr("transform", d => `translate(${d.y},${d.x})`);
+
+        node.append("circle")
+            .attr("fill", d => highlight(d) ? "red" : d.children ? "#555" : "#999")
+            .attr("r", 2.5);
+
+        node.append("text")
+            .attr("fill", d => highlight(d) ? "red" : null)
+            .attr("stroke", "white")
+            .attr("paint-order", "stroke")
+            .attr("dy", "0.31em")
+            .attr("x", d => d.children ? -6 : 6)
+            .attr("text-anchor", d => d.children ? "end" : "start")
+            .text(label);
+        
+        // Append the generated SVG to the #svg-container
+        d3.select("#svg-container").node().appendChild(svg.node());
+      }
+    var family = d3.hierarchy({
+      name: "root",
+      children: [
+        {name: "child #1"},
+        {
+          name: "child #2",
+          children: [
+            {name: "grandchild #1"},
+            {name: "grandchild #2"},
+            {name: "grandchild #3"}
+          ]
+        }
+      ]
+    })
+
+      graph(family, { label: d => d.data.name });
+    },
   },
 }
 
