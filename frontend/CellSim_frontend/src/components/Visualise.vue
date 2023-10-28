@@ -17,22 +17,42 @@
   </div>
   <br /><br />
 
-  <div class="rectangle" v-for="component in components">
-    {{ component.$.name }}
-    <div v-if="component.variable">
-      <div v-for="variable in component.variable">
-         |--- {{ variable.$.name }}
-      </div>
-   </div>
- </div>
+  <div class="container">
+    <div class="component" v-for="component in components">
+      {{ component.$.name }}
+      <div v-if="component.variable">
+        <div class="variable" v-for="variable in component.variable">
+           {{ variable.$.name }}
+        </div>
+     </div>
+    </div>
+  </div>
+  <br /><br />
 
+  <h2> Connections List </h2>
+  <br /><br />
   <div v-for="connection in connections">
     {{ connection.map_components[0].$.component_2 }} -- {{ connection.map_components[0].$.component_1 }} 
  </div>
 
+  <h2> Groups List </h2>
+  <br /><br />
+  <div v-for="group in groups">
+    <!-- get containment relationships -->
+    {{ group.relationship_ref[0].$.relationship}}
+   </div>
+
+  <!-- create tree-like structure of group data -->
+  <h2> Tree </h2>
+  <br /><br />
+  <div>
+    <TreeContainer :propData="treeData"/>
+  </div>
+
 </template>
 
 <script>
+import TreeContainer from './TreeContainer.vue'
 import axios from 'axios';
 import * as d3 from 'd3';
 import xml2js from 'xml2js';
@@ -46,6 +66,10 @@ export default {
       jsData: "",
       components: [],
       connections: [],
+      groups: [],
+      treeData: {
+        name: "Root"
+      }
     };
   },
   methods: {
@@ -81,25 +105,43 @@ export default {
       this.components = this.jsData.model.component;
       // creates list of connections
       this.connections = this.jsData.model.connection;
+      // creates list of groups
+      this.groups = this.jsData.model.group;
+      
     },
+  },
+  components: {
+    TreeContainer
   },
 }
 
 </script>
 
 <style>
-.rectangle {
-  width: 250px;
-  height: 200px;
-  background-color: lightblue;
+.container {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 20px;
+  background: antiquewhite;
+  flex-wrap: wrap;
+  border-radius: 25px;
 }
 
-.connections line {
-  stroke: black;
-  stroke-width: 2;
+.component {
+  flex: 1;  
+  width: 250px;
+  margin: 1em;
 }
+
+.variable {
+  background: lightblue;
+  margin: .5em;
+}
+
+.container > div {
+  font-size: 1vw;
+  padding: .5em;
+  background: silver;
+  border: 1px solid black;
+  border-radius: 25px;
+}
+
 </style>
