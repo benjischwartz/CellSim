@@ -30,24 +30,23 @@
   <br /><br />
 
   <h2> Connections List </h2>
-  <br /><br />
   <div v-for="connection in connections">
     {{ connection.map_components[0].$.component_2 }} -- {{ connection.map_components[0].$.component_1 }} 
  </div>
-
-  <h2> Groups List </h2>
   <br /><br />
-  <div v-for="group in groups">
-    <!-- get containment relationships -->
-    {{ group.relationship_ref[0].$.relationship}}
-   </div>
 
-  <!-- create tree-like structure of group data -->
-  <h2> Tree </h2>
+  <h2> Tree Groups List </h2>
   <br /><br />
-  <div>
-    <TreeContainer :propData="treeData"/>
-  </div>
+  <div class="container">
+    <div v-for="group in groups">
+      <!-- get containment relationships -->
+      <h3>
+        {{ group.relationship_ref[0].$.relationship}} {{ "relationship" }}
+      </h3>
+      <TreeContainer :propData=group.component_ref[0] :components=components />
+      <br /><br />
+     </div>
+    </div>
 
 </template>
 
@@ -67,9 +66,6 @@ export default {
       components: [],
       connections: [],
       groups: [],
-      treeData: {
-        name: "Root"
-      }
     };
   },
   methods: {
@@ -120,26 +116,36 @@ export default {
 <style>
 .container {
   display: flex;
+  width: 1200px;
   background: antiquewhite;
+  margin: 10em;
   flex-wrap: wrap;
+  justify-content: center;
+  align-content: stretch;
+  padding: 2em;
   border-radius: 25px;
+  gap: 10px 20px;
 }
 
 .component {
   flex: 1;  
-  width: 250px;
+  width: 1000px;
+  padding: .5em;
   margin: 1em;
 }
 
 .variable {
   background: lightblue;
   margin: .5em;
+  border: 1px solid black;
+  border-radius: 25px;
 }
 
 .container > div {
   font-size: 1vw;
   padding: .5em;
   background: silver;
+  flex-shrink: 1;
   border: 1px solid black;
   border-radius: 25px;
 }
