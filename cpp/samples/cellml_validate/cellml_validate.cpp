@@ -162,7 +162,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
                                 "Access-Control-Allow-Headers: content-type\r\n"
                                 "Access-Control-Request-Method: POST\r\n"
                                 "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                                "%s", result.c_str());
+                                "New model:\n%s", result.c_str());
     } else if (mg_http_match_uri(hm, "/api/edit")) {
 
           // Extract model data and editing info
@@ -200,16 +200,11 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           } else if (edit_type.compare("remove_unit") == 0) {
           } else if (edit_type.compare("add_component") == 0) {
               std::cout << "HERE\n";
-              //std::string edited_component_name = mg_json_get_str(file, "$.edit_component_name");
               std::string component_name = mg_json_get_str(file, "$.component_name");
               std::cout << "Extracted component name is... " << component_name << std::endl;
               auto new_component = libcellml::Component::create(component_name);
               local_model->addComponent(new_component);
           } else if (edit_type.compare("remove_component") == 0) {
-              std::cout << "HERE\n";
-              //std::string edited_component_name = mg_json_get_str(file, "$.edit_component_name");
-              std::string variable_name = mg_json_get_str(file, "$.variable_name");
-          } else if (edit_type.compare("add_varialbe") == 0) {
           } else {
               std::cout << "UNKNOWN\n";
               // Unknown command
@@ -234,7 +229,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
                                 "Access-Control-Allow-Headers: content-type\r\n"
                                 "Access-Control-Request-Method: POST\r\n"
                                 "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                                "%s", result.c_str());
+                                "Updated model:\n %s", result.c_str());
     } else {
       // struct mg_http_serve_opts opts = {.root_dir = s_root_dir};
       // mg_http_serve_dir(c, hm, &opts);
