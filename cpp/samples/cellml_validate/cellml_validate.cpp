@@ -35,6 +35,7 @@ std::string getIssueLevelFromEnum(libcellml::Issue::Level myLevel);
 void solveWithEuler(double stepSize, int stepCount, std::string outFileName);
 bool makeDirectory(const std::string &sPath);
 std::string create_issue_list(libcellml::ValidatorPtr &validator);
+std::string create_visualised_string(libcellml::ModelPtr &model);
 
 static const char *s_http_addr = "http://localhost:8000";  // HTTP port
 
@@ -91,13 +92,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
       auto parser = libcellml::Parser::create();
       auto model = parser->parseModel(file_str);
 
-      // Print model to terminal, include the MathML
-      // Redirect printModel output from std::cout to stringstream
-      std::stringstream buffer;
-      std::streambuf * old = std::cout.rdbuf(buffer.rdbuf());
-      printModel(model, true);
-      std::string text = buffer.str();
-      std::cout.rdbuf( old );
+      std::string text = create_visualised_string(model);
 
 	  // http reply
       mg_http_reply(c, 200, "Content-Type: application/json\r\n"
@@ -105,7 +100,38 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
                         "Access-Control-Request-Method: POST\r\n"
                         "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
                         "%s", text.c_str());
+    } else if (mg_http_match_uri(hm, "/api/togglelocal")) {
+          // string to store result
+          std::string result;
+
+          // Extract model name and id
+          struct mg_str file = hm->body;
+
+          // Check if visualise toggle is true
+          bool *visualise = new bool(false);
+          mg_json_get_bool(file, "$.visualise", visualise);
+          std::cout << "Visualise toggle is... " << *visualise << std::endl;
+
+          // Create serialised model string of local
+          if (!*visualise) {
+              auto printer = libcellml::Printer::create();
+              result = printer->printModel(local_model);
+          } else {
+          // Create visualised model string of local
+              result = create_visualised_string(local_model);
+          }
+          // Send JSON response
+          mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                                "Access-Control-Allow-Headers: content-type\r\n"
+                                "Access-Control-Request-Method: POST\r\n"
+                                "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                                "Updated model:\n %s", result.c_str());
+
     } else if (mg_http_match_uri(hm, "/api/create")) {
+
+          // string to store result
+          std::string result;
+
           // Extract model name and id
           struct mg_str file = hm->body;
           char *model_name = mg_json_get_str(file, "$.model_name");
@@ -113,90 +139,97 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           std::cout << "Extracted name is... " << model_name << std::endl;
           std::cout << "Extracted id is... " << model_id << std::endl;
 
-          // Create new model
-          auto model = libcellml::Model::create(model_name);
-          model->setId(model_id);
-
           // Reset local model
           local_model = libcellml::Model::create(model_name);
           local_model->setId(model_id);
 
-          // Create serialised model string
-          auto printer = libcellml::Printer::create();
-          std::string serialisedModelString = printer->printModel(model);
-          
-          // Create serialised local_model string
-          std::string serialisedLocalModelString = printer->printModel(local_model);
+          // Check if visualise toggle is true
+          bool *visualise = new bool(false);
+          mg_json_get_bool(file, "$.visualise", visualise);
+          std::cout << "Visualise toggle is... " << *visualise << std::endl;
+
+          // Create serialised model string of local
+          if (!*visualise) {
+              auto printer = libcellml::Printer::create();
+              result = printer->printModel(local_model);
+          } else {
+          // Create visualised model string of local
+              result = create_visualised_string(local_model);
+          }
 
           // Send JSON response
           mg_http_reply(c, 200, "Content-Type: application/json\r\n"
                                 "Access-Control-Allow-Headers: content-type\r\n"
                                 "Access-Control-Request-Method: POST\r\n"
                                 "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                                "New model:\n%s", serialisedLocalModelString.c_str());
+                                "New model:\n%s", result.c_str());
     } else if (mg_http_match_uri(hm, "/api/edit")) {
+
           // Extract model data and editing info
           //    Edit options:
               //    1) Add/remove units
               //    2) Add/remove component
           //    If unit already exits or invalid name ==> error
+
+          // string to store result
+          std::string result;
+
           struct mg_str file = hm->body;
           std::string edit_type = mg_json_get_str(file, "$.edit_type");
           std::string file_str = mg_json_get_str(file, "$.file");
           std::string model_name = mg_json_get_str(file, "$.model_name");
-        std::string model_id = mg_json_get_str(file, "$.model_id");
+          std::string model_id = mg_json_get_str(file, "$.model_id");
           std::cout << "Extracted edit is... " << edit_type << std::endl;
           std::cout << "Extracted file is... " << file_str << std::endl;
           std::cout << "Extracted model name is... " << model_name << std::endl;
           std::cout << "Extracted model id is... " << model_id << std::endl;
           
-          // Create model
+          // Create model -> NOT NEEDED
+          /*
           auto parser = libcellml::Parser::create(false);
           auto model = parser->parseModel(file_str);
           model->setName(model_name);
           model->setId(model_id);
-
-          // Before
-          std::cout<<"Before:\n";
-          printModel(local_model, true);
+          */
 
           if (edit_type.compare("add_units") == 0) {
-              std::cout << "HERE\n";
               std::string units_name = mg_json_get_str(file, "$.units_name");
               std::cout << "Extracted units name is... " << units_name << std::endl;
               auto new_unit = libcellml::Units::create(units_name);
               local_model->addUnits(new_unit);
-              model->addUnits(new_unit);
-          } else if (edit_type.compare("remove_unit")) {
+          } else if (edit_type.compare("remove_unit") == 0) {
           } else if (edit_type.compare("add_component") == 0) {
               std::cout << "HERE\n";
               std::string component_name = mg_json_get_str(file, "$.component_name");
               std::cout << "Extracted component name is... " << component_name << std::endl;
               auto new_component = libcellml::Component::create(component_name);
               local_model->addComponent(new_component);
-              model->addComponent(new_component);
-          } else if (edit_type.compare("remove_component")) {
+          } else if (edit_type.compare("remove_component") == 0) {
           } else {
               std::cout << "UNKNOWN\n";
               // Unknown command
           }
 
-          // After
-          std::cout<<"After:\n";
-          printModel(local_model, true);
+          // Check if visualise toggle is true
+          bool *visualise = new bool(false);
+          mg_json_get_bool(file, "$.visualise", visualise);
+          std::cout << "Visualise toggle is... " << *visualise << std::endl;
 
-          // Create serialised model string
-          auto printer = libcellml::Printer::create();
-          std::string serialisedModelString = printer->printModel(model);
-          // Create serialised local_model string
-          std::string serialisedLocalModelString = printer->printModel(local_model);
+          // Create serialised model string of local
+          if (!*visualise) {
+              auto printer = libcellml::Printer::create();
+              result = printer->printModel(local_model);
+          } else {
+          // Create visualised model string of local
+              result = create_visualised_string(local_model);
+          }
 
           // Send JSON response
           mg_http_reply(c, 200, "Content-Type: application/json\r\n"
                                 "Access-Control-Allow-Headers: content-type\r\n"
                                 "Access-Control-Request-Method: POST\r\n"
                                 "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                                "Updated model:\n %s", serialisedLocalModelString.c_str());
+                                "Updated model:\n %s", result.c_str());
     } else {
       // struct mg_http_serve_opts opts = {.root_dir = s_root_dir};
       // mg_http_serve_dir(c, hm, &opts);
@@ -250,7 +283,17 @@ std::string create_issue_list(libcellml::ValidatorPtr &validator) {
     return issueList;
 }
 
-
+// Redirect printModel output from std::cout to stringstream
+// Automatically includes the MathML
+std::string create_visualised_string(libcellml::ModelPtr &model)
+{
+      std::stringstream buffer;
+      std::streambuf * old = std::cout.rdbuf(buffer.rdbuf());
+      printModel(model, true);
+      std::string text = buffer.str();
+      std::cout.rdbuf( old );
+      return text;
+}
 
 
 // HELPER FUNCTIONS:
