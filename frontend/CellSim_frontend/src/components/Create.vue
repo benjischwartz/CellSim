@@ -23,16 +23,28 @@
 	    <input type="checkbox" v-model="visualise" @click="toggleVisualise()" />
 	  </label>
 
-	  <!-- Add a visualization element (e.g., a div) that is conditionally displayed -->
-	  <div v-if="visualise">
-	    <!-- Add your visualization content here -->
-	  </div>
+    <!-- Add a visualization element (e.g., a div) that is conditionally displayed -->
+    <div v-if="visualise">
+    <!-- Add your visualization content here -->
+    </div>
+
+    <!-- TODO: list components in model for editing purposes
+    <div v-if="components">
+      <h2> Component List </h2>
+      <div v-for="component in components">
+        {{ component.$.name }}    
+      </div>
+    </div>
+    -->
+
+    
 
 </template>
 
 <script>
-import TreeContainer from './TreeContainer.vue'
-import axios from 'axios'
+import TreeContainer from './TreeContainer.vue';
+import axios from 'axios';
+import xml2js from 'xml2js';
 export default {
   name: "Create",
   data()
@@ -42,10 +54,13 @@ export default {
       model_name: "",
       model_id: "",
       units_name: "",
+      edit_component_name: "",
       component_name: "",
+      variable_name: "",
       edit_type: "",
       visualise: false,
       resultData: null, // data property to store result
+      // JsData and components to be added
     };
   },
 
@@ -58,6 +73,19 @@ export default {
         visualise: this.visualise
       })
       this.resultData = result;
+      // convert data to js 
+      /*
+      xml2js.parseString(this.file, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.jsData = result;
+        const str = JSON.stringify(result, null, 2);
+        console.log("js -> %s", str);
+      });
+      this.components = this.jsData.model.component;
+      */
+
       console.warn("function called", this.file)
     },
     async addUnits()
@@ -71,6 +99,18 @@ export default {
         visualise: this.visualise
       })
       this.resultData = result;
+      // convert data to js 
+      /*
+      xml2js.parseString(this.file, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.jsData = result;
+        const str = JSON.stringify(result, null, 2);
+        console.log("js -> %s", str);
+      });
+      this.components = this.jsData.model.component;
+      */
       console.warn("function called", this.file)
     },
     async addComponent()
@@ -84,6 +124,18 @@ export default {
         visualise: this.visualise
       })
       this.resultData = result;
+      // convert data to js 
+      /*
+      xml2js.parseString(this.file, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.jsData = result;
+        const str = JSON.stringify(result, null, 2);
+        console.log("js -> %s", str);
+      });
+      this.components = this.jsData.model.component;
+      */
       console.warn("function called", this.file)
     },
     async toggleVisualise()
