@@ -51,7 +51,7 @@
 </template>
 
 <script>
-import TreeContainer from './TreeContainer.vue'
+import TreeContainer from './TreeContainer.vue';
 import axios from 'axios';
 import * as d3 from 'd3';
 import xml2js from 'xml2js';
