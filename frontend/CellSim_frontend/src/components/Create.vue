@@ -21,10 +21,26 @@
 	  <!-- Add the "Visualize" toggle -->
 	  <label>
 	    Visualize
-	    <input type="checkbox" v-model="visualise" @click="createComponentList()"/>
+	    <input type="checkbox" v-model="visualise"/>
 	  </label>
       <br /><br />
 
+    <div v-if="components.length">
+      <br /><br />
+	  <!-- Add Component List -->
+      <h2>Component List</h2>
+      <br /><br />
+        <div v-for="component in components">
+          {{ component.$.name }}
+          <input type="text" name="add_component_name" v-model="add_component_name" placeholder="Add Component" />
+          <input type="text" name="add_variable_name" v-model="add_variable_name" placeholder="Add Variable" />
+          <button >Add</button><br /><br />
+          <br /><br />
+        </div>
+      <br /><br />
+    </div>
+
+      <br /><br />
 	  <!-- Add a visualization element (e.g., a div) that is conditionally displayed -->
 	  <div v-if="visualise">
         <!-- display formatted data-->
@@ -81,6 +97,8 @@ export default {
       model_id: "",
       units_name: "",
       component_name: "",
+      add_component_name: "",
+      add_variable_name: "",
       edit_type: "",
       visualise: false,
       formattedData: "", // data property to store the formatted result
@@ -118,7 +136,7 @@ export default {
       const responseText = result.data;
       this.xmlData = responseText.substring(0, responseText.indexOf(separator));
       this.formattedData = responseText.substring(this.xmlData.length + separator.length);
-      createComponentList();
+      //createComponentList();
     },
     async addComponent()
     {
@@ -134,10 +152,6 @@ export default {
       const responseText = result.data;
       this.xmlData = responseText.substring(0, responseText.indexOf(separator));
       this.formattedData = responseText.substring(this.xmlData.length + separator.length);
-      createComponentList();
-    },
-    async createComponentList()
-    {
       xml2js.parseString(this.xmlData, (err, result) => {
         if (err) {
           throw err;
@@ -145,10 +159,20 @@ export default {
         this.components = result.model.component;
         this.groups = result.model.group;
       });
-        
     },
-
   },
+//    async createComponentList()
+//    {
+//      xml2js.parseString(this.xmlData, (err, result) => {
+//        if (err) {
+//          throw err;
+//        }
+//        this.components = result.model.component;
+//        this.groups = result.model.group;
+//      });
+//        
+//    },
+
   components: {
     TreeContainer
   },
