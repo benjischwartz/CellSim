@@ -30,11 +30,11 @@
 	  <!-- Add Component List -->
       <h2>Component List</h2>
       <br /><br />
-        <div v-for="component in components">
+        <div v-for="component in items">
           {{ component.$.name }}
-          <input type="text" name="add_component_name" v-model="add_component_name" placeholder="Add Component" />
-          <input type="text" name="add_variable_name" v-model="add_variable_name" placeholder="Add Variable" />
-          <button >Add</button><br /><br />
+          <input type="text" v-model="component.component" placeholder="Add Component" />
+          <input type="text" v-model="component.variable" placeholder="Add Variable" />
+          <button @click="submitValue(component)">Add</button><br /><br />
           <br /><br />
         </div>
       <br /><br />
@@ -62,7 +62,6 @@
           </div>
           <br /><br />
 
-        <!-- commenting out until groups can be added
           <h2> Tree Groups List </h2>
           <br /><br />
           <div class="container">
@@ -74,7 +73,6 @@
               <br /><br />
              </div>
             </div>
-        -->
 
 
 	  </div>
@@ -97,13 +95,12 @@ export default {
       model_id: "",
       units_name: "",
       component_name: "",
-      add_component_name: "",
-      add_variable_name: "",
       edit_type: "",
       visualise: false,
       formattedData: "", // data property to store the formatted result
       xmlData: "", // data property to store xml result
       components: [],
+      items: [],
       groups: [],
     };
   },
@@ -115,13 +112,12 @@ export default {
         model_name: this.model_name,
         model_id: this.model_id,
       })
+      console.log("sending model");
 
       // Separate the response data into XML and formatted data
       const responseText = result.data;
       this.xmlData = responseText.substring(0, responseText.indexOf(separator));
       this.formattedData = responseText.substring(this.xmlData.length + separator.length);
-      createComponentList();
-
     },
     async addUnits()
     {
@@ -136,7 +132,6 @@ export default {
       const responseText = result.data;
       this.xmlData = responseText.substring(0, responseText.indexOf(separator));
       this.formattedData = responseText.substring(this.xmlData.length + separator.length);
-      //createComponentList();
     },
     async addComponent()
     {
@@ -157,21 +152,75 @@ export default {
           throw err;
         }
         this.components = result.model.component;
+        this.items = this.components.map(item => {
+          return { ...item, component: '', variable: '' }
+        });
         this.groups = result.model.group;
+        console.log(this.groups);
       });
     },
+  async submitValue(item)
+  {
+    const { $, component, variable } = item;
+    if (component) { console.log(`adding ${component} component to ${$.name}`)};
+    if (variable) { console.log(`adding ${variable} variable to ${$.name}`)};
+
+    if (component) {
+      let result = await axios.post("http://localhost:8000/api/edit", {
+        edit_type: "add_child_component",
+        component_name: $.name,
+        child_component_name: component,
+        file: this.xmlData,
+        model_name: this.model_name,
+        model_id: this.model_id,
+      })
+
+      // Separate the response data into XML and formatted data
+      const responseText = result.data;
+      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
+      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      xml2js.parseString(this.xmlData, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.components = result.model.component;
+        this.items = this.components.map(item => {
+          return { ...item, component: '', variable: '' }
+        });
+        this.groups = result.model.group;
+        console.log(this.groups);
+      });
+    }
+
+    else if (variable) {
+      let result = await axios.post("http://localhost:8000/api/edit", {
+        edit_type: "add_variable",
+        component_name: $.name,
+        variable_name: variable,
+        file: this.xmlData,
+        model_name: this.model_name,
+        model_id: this.model_id,
+      })
+
+      // Separate the response data into XML and formatted data
+      const responseText = result.data;
+      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
+      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      xml2js.parseString(this.xmlData, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.components = result.model.component;
+        this.items = this.components.map(item => {
+          return { ...item, component: '', variable: '' }
+        });
+        this.groups = result.model.group;
+        console.log(this.groups);
+      });
+    }
   },
-//    async createComponentList()
-//    {
-//      xml2js.parseString(this.xmlData, (err, result) => {
-//        if (err) {
-//          throw err;
-//        }
-//        this.components = result.model.component;
-//        this.groups = result.model.group;
-//      });
-//        
-//    },
+
+  },
 
   components: {
     TreeContainer

@@ -161,7 +161,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           // REMOVE UNITS          
           else if (edit_type.compare("remove_unit") == 0) {
           } 
-          // ADD COMPONENT 
+          // ADD PARENT COMPONENT 
           else if (edit_type.compare("add_component") == 0) {
               std::cout << "HERE\n";
               std::string component_name = mg_json_get_str(file, "$.component_name");
@@ -169,8 +169,30 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
               auto new_component = libcellml::Component::create(component_name);
               local_model->addComponent(new_component);
           } 
+          // ADD CHILD COMPONENT 
+          else if (edit_type.compare("add_child_component") == 0) {
+              std::cout << "HERE\n";
+              std::string component_name = mg_json_get_str(file, "$.component_name");
+              std::cout << "parent name: " << component_name << std::endl;
+              std::string child_component_name = mg_json_get_str(file, "$.child_component_name");
+              std::cout << "child name: " << child_component_name << std::endl;
+              auto child_component = libcellml::Component::create(child_component_name);
+              auto parent_component = local_model->component(component_name);
+              parent_component->addComponent(child_component);
+          } 
           // REMOVE COMPONENT
           else if (edit_type.compare("remove_component") == 0) {
+          } 
+          // ADD VARIABLE 
+          else if (edit_type.compare("add_variable") == 0) {
+              std::cout << "HERE\n";
+              std::string component_name = mg_json_get_str(file, "$.component_name");
+              std::cout << "component name: " << component_name << std::endl;
+              std::string variable_name = mg_json_get_str(file, "$.variable_name");
+              std::cout << "variable name: " << variable_name << std::endl;
+              auto new_variable = libcellml::Variable::create(variable_name);
+              auto component = local_model->component(component_name);
+              component->addVariable(new_variable);
           } else {
               std::cout << "UNKNOWN\n";
               // Unknown command
