@@ -37,16 +37,16 @@
 
   <h2> Tree Groups List </h2>
   <br /><br />
-  <div class="container">
     <div v-for="group in groups">
       <!-- get containment relationships -->
-      <h3>
-        {{ group.relationship_ref[0].$.relationship}} {{ "relationship" }}
-      </h3>
-      <TreeContainer :propData=group.component_ref[0] :components=components />
-      <br /><br />
-     </div>
-    </div>
+          <h3>
+            {{ group.relationship_ref[0].$.relationship}} {{ "relationship" }}
+          </h3>
+          <div class="container">
+          <TreeContainer :propData=group.component_ref[0] :components=components />
+          </div>
+        <br /><br />
+      </div>
 
 </template>
 
@@ -116,36 +116,38 @@ export default {
 <style>
 .container {
   display: flex;
-  width: 1200px;
   background: antiquewhite;
   margin: 10em;
-  flex-wrap: wrap;
   justify-content: center;
-  align-content: stretch;
-  padding: 2em;
+  padding: 1em;
+  border-radius: 25px;
+  gap: 10px 20px;
+  width: 90%;
+  max-width: 1200px;
+}
+
+.treecontainer {
+  display: flex;
+  background: antiquewhite;
+  margin: 10em;
+  justify-content: center;
+  padding: 1em;
   border-radius: 25px;
   gap: 10px 20px;
 }
 
 .component {
   flex: 1;  
-  width: 1000px;
+  flex-wrap: wrap;
+  flex-direction: row;
   padding: .5em;
   margin: 1em;
+  display: flex;
 }
 
 .variable {
   background: lightblue;
   margin: .5em;
-  border: 1px solid black;
-  border-radius: 25px;
-}
-
-.container > div {
-  font-size: 1vw;
-  padding: .5em;
-  background: silver;
-  flex-shrink: 1;
   border: 1px solid black;
   border-radius: 25px;
 }
