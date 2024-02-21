@@ -1,52 +1,55 @@
 <template>
-  <div>
+<div>
     <h1>Visualize CellML File</h1>
     <!-- Add input for file upload -->
     <input type="file" @change="handleFileUpload" accept=".xml" />
     <br /><br />
     <!-- Add text boxes for model name and model id -->
-    <textarea name="file" v-model="file" placeholder="Or paste File Data Here"></textarea> <br /><br />
+    <textarea name="file" v-model="file" placeholder="Or paste File Data Here"></textarea> 
+    <br /><br />
     <button @click="sendData()">Visualize</button> <br /><br />
-  </div>
+</div>
 
-  <!-- Display the result data in a panel -->
-  <br /><br />
-  <div v-if="resultData">
+<!-- Display the result data in a panel -->
+<br /><br />
+<div v-if="resultData">
     <h2>Result Data</h2>
     <pre>{{ resultData.data }}</pre>
-  </div>
-  <br /><br />
+</div>
 
-  <div class="container">
+<br /><br />
+
+<div class="container">
     <div class="component" v-for="component in components">
-      {{ component.$.name }}
-      <div v-if="component.variable">
-        <div class="variable" v-for="variable in component.variable">
-           {{ variable.$.name }}
+        {{ component.$.name }}
+        <div v-if="component.variable">
+            <div v-for="variable in component.variable">
+                <Variable :name=variable.$.name :variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"/>
+            </div>
         </div>
-     </div>
     </div>
-  </div>
-  <br /><br />
+</div>
 
-  <h2> Connections List </h2>
-  <div v-for="connection in connections">
-    {{ connection.map_components[0].$.component_2 }} -- {{ connection.map_components[0].$.component_1 }} 
- </div>
-  <br /><br />
+<br /><br />
 
-  <h2> Tree Groups List </h2>
-  <br /><br />
+<h2> Connections List </h2>
+<div v-for="connection in connections">
+    {{ connection.map_components[0].$.component_2 }} -- {{ connection.map_components[0].$.component_1 }}
+</div>
+
+<br /><br />
+
+<h2> Tree Groups List </h2>
+<br /><br />
+<div class= "group-wrapper">
     <div v-for="group in groups">
-      <!-- get containment relationships -->
-          <h3>
-            {{ group.relationship_ref[0].$.relationship}} {{ "relationship" }}
-          </h3>
-          <div class="container">
-          <TreeContainer :propData=group.component_ref[0] :components=components />
-          </div>
-        <br /><br />
-      </div>
+        <!-- get containment relationships -->
+        <h3> {{ group.relationship_ref[0].$.relationship}} {{ "relationship" }} </h3>
+        <div>
+            <TreeContainer :propData=group.component_ref[0] :components=components :connections=connections />
+        </div>
+    </div>
+</div>
 
 </template>
 
@@ -55,14 +58,16 @@ import TreeContainer from './TreeContainer.vue';
 import axios from 'axios';
 import * as d3 from 'd3';
 import xml2js from 'xml2js';
+import Variable from './Variable.vue';
+import VariableMapping from "./VariableMapping.vue"
 
 export default {
-  name: "visualise",
+  name: 'visualise',
   data() {
     return {
-      file: "",
+      file: '',
       resultData: null,
-      jsData: "",
+      jsData: '',
       components: [],
       connections: [],
       groups: [],
@@ -80,18 +85,18 @@ export default {
       }
     },
     async sendData() {
-      let result = await axios.post("http://localhost:8000/api/visualise", {
-        file: this.file
+      const result = await axios.post('http://localhost:8000/api/visualise', {
+        file: this.file,
       });
       this.resultData = result;
-      console.warn("function called", this.file);
+      console.warn('function called', this.file);
       xml2js.parseString(this.file, (err, result) => {
         if (err) {
           throw err;
         }
         this.jsData = result;
         const str = JSON.stringify(result, null, 2);
-        console.log("js -> %s", str);
+        console.log('js -> %s', str);
       });
       this.visualizeData();
     },
@@ -103,51 +108,63 @@ export default {
       this.connections = this.jsData.model.connection;
       // creates list of groups
       this.groups = this.jsData.model.group;
-      
     },
+    getMappingsForVariable(variableName, componentName) {
+        let mappings = [];
+        for (let connection of this.connections) {
+            if (connection.map_components[0].$.component_2 == componentName ||
+                connection.map_components[0].$.component_1 == componentName) {
+                for (let mapping of connection.map_variables) {
+                    if (mapping.$.variable_1 == variableName || 
+                        mapping.$.variable_2 == variableName) {
+                        mappings.push({component_1: connection.map_components[0].$.component_1,
+                                        component_2: connection.map_components[0].$.component_2,
+                                        variable_1: mapping.$.variable_1,
+                                        variable_2: mapping.$.variable_2});
+                    }
+                }
+            }
+        }
+        return mappings;
+    }
   },
   components: {
-    TreeContainer
+    TreeContainer,
+    Variable,
+    VariableMapping,
   },
-}
+};
 
 </script>
 
 <style>
+
 .container {
   display: flex;
-  background: antiquewhite;
-  margin: 10em;
+  background: antiquewhite; 
+  margin: 1em;
   justify-content: center;
   padding: 1em;
   border-radius: 25px;
   gap: 10px 20px;
-  width: 90%;
-  max-width: 1200px;
 }
 
-.treecontainer {
+.group-wrapper {
   display: flex;
-  background: antiquewhite;
-  margin: 10em;
-  justify-content: center;
-  padding: 1em;
   border-radius: 25px;
+  flex-direction: column;
   gap: 10px 20px;
 }
 
 .component {
-  flex: 1;  
+  flex: 1;
   flex-wrap: wrap;
   flex-direction: row;
-  padding: .5em;
-  margin: 1em;
   display: flex;
 }
 
 .variable {
   background: lightblue;
-  margin: .5em;
   border: 1px solid black;
   border-radius: 25px;
 }
