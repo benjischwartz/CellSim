@@ -5,7 +5,14 @@
           <div v-if="component.variable">
             <div class="box">
             <div v-for="variable in component.variable">
-                <Variable :name=variable.$.name :variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"/>
+                <Variable 
+                    :name=variable.$.name 
+                    :variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"
+                    :highlighted="highlighted"
+                    :component="component.$.name"
+                    :source_coords="source_coords"
+                    @variable-hover="handleVariableHover"
+                />
             </div>
             </div>
          </div>
@@ -18,6 +25,9 @@
         :depth="depth+1"
         :components="components"
         :connections="connections"
+        :highlighted="highlighted"
+        :source_coords="source_coords"
+        @variable-hover="handleVariableHover"
     />
     </div>
 
@@ -36,25 +46,38 @@ export default {
         },
         components: Object,
         connections: Object,
+        highlighted: Object,
+        source_coords: Object,
     },
     methods: {
     getMappingsForVariable(variableName, componentName) {
         let mappings = [];
         for (let connection of this.connections) {
-            if (connection.map_components[0].$.component_2 == componentName ||
-                connection.map_components[0].$.component_1 == componentName) {
+            if (connection.map_components[0].$.component_1 == componentName) {
                 for (let mapping of connection.map_variables) {
-                    if (mapping.$.variable_1 == variableName || 
-                        mapping.$.variable_2 == variableName) {
-                        mappings.push({component_1: connection.map_components[0].$.component_1,
-                                        component_2: connection.map_components[0].$.component_2,
-                                        variable_1: mapping.$.variable_1,
-                                        variable_2: mapping.$.variable_2});
+                    if (mapping.$.variable_1 == variableName) {
+                        mappings.push({component: connection.map_components[0].$.component_2,
+                                    variable: mapping.$.variable_2});
+                    }
+                }
+            } else if (connection.map_components[0].$.component_2 == componentName) {
+                for (let mapping of connection.map_variables) {
+                    if (mapping.$.variable_2 == variableName) {
+                        mappings.push({component: connection.map_components[0].$.component_1,
+                                    variable: mapping.$.variable_1});
                     }
                 }
             }
         }
         return mappings;
+    },
+    handleVariableHover(hoveredVariableName, variable_x, variable_y, hoveredVariableMappings) {
+        console.log('Hovered Variable Name:', hoveredVariableName);
+        console.log('Hovered Variable Mappings:', hoveredVariableMappings);
+        console.log('highlighted:', this.highlighted);
+        this.source_coords.x = variable_x;
+        this.source_coords.y = variable_y;
+        this.$emit('variable-hover', hoveredVariableName, variable_x, variable_y, hoveredVariableMappings);
     }},
     components: {
         Variable,

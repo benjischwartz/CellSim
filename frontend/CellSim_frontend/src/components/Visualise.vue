@@ -20,9 +20,10 @@
 <br /><br />
 
 <div class="container">
-    <div class="component" v-for="component in components">
-        {{ component.$.name }}
-        <div v-if="component.variable">
+    <div class="{ 'component': true, 'collapsed': isCollapsed }" v-for="component in components">
+        <div class="name">{{ component.$.name }} </div>
+        <button class="collapse-button" @click="toggleCollapse(component.$.name)">{{ isCollapsed[component.$.name] ? 'Expand' : 'Collapse' }}</button>
+        <div v-if="component.variable && !isCollapsed[component.$.name]">
             <div v-for="variable in component.variable">
                 <Variable :name=variable.$.name :variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"/>
             </div>
@@ -71,7 +72,17 @@ export default {
       components: [],
       connections: [],
       groups: [],
+      isCollapsed: {},
     };
+  },
+  watch: {
+    components: {
+        handler(newVal) {
+            this.initializeIsCollapsed();
+
+        },
+        immediate: true,
+    },
   },
   methods: {
     handleFileUpload(event) {
@@ -112,20 +123,32 @@ export default {
     getMappingsForVariable(variableName, componentName) {
         let mappings = [];
         for (let connection of this.connections) {
-            if (connection.map_components[0].$.component_2 == componentName ||
-                connection.map_components[0].$.component_1 == componentName) {
+            if (connection.map_components[0].$.component_1 == componentName) {
                 for (let mapping of connection.map_variables) {
-                    if (mapping.$.variable_1 == variableName || 
-                        mapping.$.variable_2 == variableName) {
-                        mappings.push({component_1: connection.map_components[0].$.component_1,
-                                        component_2: connection.map_components[0].$.component_2,
-                                        variable_1: mapping.$.variable_1,
-                                        variable_2: mapping.$.variable_2});
+                    if (mapping.$.variable_1 == variableName) {
+                        mappings.push({component: connection.map_components[0].$.component_2,
+                                    variable: mapping.$.variable_2});
+                    }
+                }
+            } else if (connection.map_components[0].$.component_2 == componentName) {
+                for (let mapping of connection.map_variables) {
+                    if (mapping.$.variable_2 == variableName) {
+                        mappings.push({component: connection.map_components[0].$.component_1,
+                                    variable: mapping.$.variable_1});
                     }
                 }
             }
         }
         return mappings;
+    },
+    initializeIsCollapsed() {
+        this.isCollapsed = {};
+        for (const component of this.components) {
+            this.isCollapsed[component.$.name] = false;
+        }
+    },
+    toggleCollapse(componentName) {
+        this.isCollapsed[componentName] = !this.isCollapsed[componentName];
     }
   },
   components: {
@@ -157,6 +180,7 @@ export default {
 }
 
 .component {
+  position: relative;
   flex: 1;
   flex-wrap: wrap;
   flex-direction: row;
@@ -167,6 +191,19 @@ export default {
   background: lightblue;
   border: 1px solid black;
   border-radius: 25px;
+}
+
+.name {
+    padding: 10px 0;
+}
+
+.collapse-button {
+    top: 10px;
+    right: 10px;
+}
+
+.collapsed {
+    height: fit-content;
 }
 
 </style>

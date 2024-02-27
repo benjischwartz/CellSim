@@ -1,7 +1,7 @@
 <template>
     <div class='variable-mapping'>
-        Connection: {{mapping.component_1}} = {{mapping.component_2}}
-        Variables: {{mapping.variable_1}} = {{mapping.variable_2}}
+        Mapped Component: {{mapping.component}}
+        Mapped Variable: {{mapping.variable}}
         <br><br/>
     </div>
 </template>
