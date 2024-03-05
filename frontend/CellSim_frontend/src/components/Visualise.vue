@@ -33,21 +33,22 @@
 
 <br /><br />
 
-<h2> Connections List </h2>
-<div v-for="connection in connections">
-    {{ connection.map_components[0].$.component_2 }} -- {{ connection.map_components[0].$.component_1 }}
-</div>
-
+<h2> Tree View </h2>
 <br /><br />
 
-<h2> Tree Groups List </h2>
-<br /><br />
 <div class= "group-wrapper">
     <div v-for="group in groups">
         <!-- get containment relationships -->
         <h3> {{ group.relationship_ref[0].$.relationship}} {{ "relationship" }} </h3>
         <div>
-            <TreeContainer :propData=group.component_ref[0] :components=components :connections=connections />
+          <div v-for="component_ref in group.component_ref">
+            <TreeContainer 
+              :propData=component_ref 
+              :components=components 
+              :connections=connections
+              :componentsInGroup=getComponentsInGroup(group) 
+            />
+          </div>
         </div>
     </div>
 </div>
@@ -140,6 +141,19 @@ export default {
             }
         }
         return mappings;
+    },
+    getComponentsInGroup(group) {
+      let components = [];
+      const getComponentsRecursive = (node) => {
+          if (node.component_ref) {
+              for (const child of node.component_ref) {
+                  components.push(child);
+                  getComponentsRecursive(child);
+              }
+          }
+      };
+      getComponentsRecursive(group);
+      return components;
     },
     initializeIsCollapsed() {
         this.isCollapsed = {};
