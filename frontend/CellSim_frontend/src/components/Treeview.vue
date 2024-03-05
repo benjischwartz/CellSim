@@ -23,7 +23,7 @@
         </div>
       </div>
 
-        <Treeview 
+        <TreeView 
             v-for="child in node.component_ref" 
             :key="child.$.component" 
             :node="child" 
@@ -43,7 +43,7 @@
 import Variable from './Variable.vue';
 import VariableMapping from './VariableMapping.vue';
 export default {
-    name: "Treeview",
+    name: "TreeView",
     props: {
         node: Object,
         depth: {
@@ -85,13 +85,6 @@ export default {
     },
     toggleCollapse(componentName) {
         this.isCollapsed[componentName] = !this.isCollapsed[componentName];
-        // const childComponents = this.node.component_ref;
-        // if (childComponents) {
-        //     childComponents.forEach(child => {
-        //         this.isCollapsed[child.$.component] = !this.isCollapsed[child.$.component];
-        //     });
-        // }
-        // Recursively toggle the collapse state of all child components
         const toggleChildCollapse = (node) => {
             if (node.component_ref) {
                 for (const child of node.component_ref) {

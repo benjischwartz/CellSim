@@ -1,6 +1,6 @@
 <template>
     <div class="treecontainer">
-        <Treeview 
+        <TreeView 
             :node="propData" 
             :components="components" 
             :connections="connections"
@@ -9,32 +9,16 @@
             :isCollapsed="isCollapsed"
             @variable-hover="handleVariableHover"
         />
-        <!-- <div v-for="component in components">
-            <div v-if="!isComponentInGroup(component)">
-                <div class="component"> {{  component.$.name }}
-                    <div v-for="component in components">
-                        <div v-if="component.variable">
-                            <div v-for="variable in component.variable">
-                                <Variable 
-                                    :name="variable.$.name"
-                                    :component="component.$.name"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> -->
     </div>
 </template>
 
 <script>
-import Treeview from './Treeview.vue';
+import TreeView from './TreeView.vue'; 
 import Variable from './Variable.vue';
 export default {
     name: "TreeContainer",
     components: {
-        Treeview,
+        TreeView,
         Variable,
     },
     data() {
@@ -92,15 +76,11 @@ export default {
 }
 
 .component {
-  background: silver;
+  position: relative;
+  flex: 1;
+  flex-wrap: wrap;
+  flex-direction: row;
   display: flex;
-  justify-content: center;
-  border-radius: 25px;
-  border: 1px solid black;
-  padding: 10px;
-  margin: 10px;
-  width: 90%;
-  max-width: 2400px;
 }
 
 .component > div {
