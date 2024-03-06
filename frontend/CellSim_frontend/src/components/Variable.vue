@@ -1,9 +1,9 @@
 <template>
 <div class=variable 
-    :class="{ 'highlighted': isHighlighted }"
-    @mouseenter="showMappings" 
-    @mouseleave="hideMappings">
-    {{ name }}
+	:class="{ 'highlighted': isHighlighted }"
+	@mouseenter="showMappings" 
+	@mouseleave="hideMappings">
+	{{ name }}
 </div>
 </template>
 
@@ -11,43 +11,43 @@
 import VariableMapping from './VariableMapping.vue';
 
 export default {
-    name: 'Variable',
-    props: {
-        name: String,
-        component: String,
-        variableMappings: Array,
-        highlighted: Array,
-    },
-    computed: {
-        isHighlighted() {
-            if (!this.highlighted) return false;
-            console.log("This variable is highlighted");
-            return this.highlighted.some(mapping=> {
-                return (mapping.component === this.component && mapping.variable === this.name);
-            });
-        },
-        coords() {
-            return this.getPosition();
-        },
-    },
-    components: {
-        VariableMapping
-    },
-    data() {
-        return {
-            isHovering: false
-        };
-    },
-    methods: {
-        showMappings() {
-            this.isHovering = true;
-            this.$emit('variable-hover', this.name, this.variableMappings);
-        },
-        hideMappings() {
-            this.isHovering = false;
-            this.$emit('variable-hover', null, null);
-        },
-    }
+	name: 'Variable',
+	props: {
+		name: String,
+		component: String,
+		variableMappings: Array,
+		highlighted: Array,
+	},
+	computed: {
+		isHighlighted() {
+			if (!this.highlighted) return false;
+			console.log("This variable is highlighted");
+			return this.highlighted.some(mapping=> {
+				return (mapping.component === this.component && mapping.variable === this.name);
+			});
+		},
+		coords() {
+			return this.getPosition();
+		},
+	},
+	components: {
+		VariableMapping
+	},
+	data() {
+		return {
+			isHovering: false
+		};
+	},
+	methods: {
+		showMappings() {
+			this.isHovering = true;
+			this.$emit('variable-hover', this.name, this.variableMappings);
+		},
+		hideMappings() {
+			this.isHovering = false;
+			this.$emit('variable-hover', null, null);
+		},
+	}
 }
 </script>
 
@@ -61,7 +61,7 @@ export default {
 }
 
 .variable.highlighted {
-    background: greenyellow;
+	background: greenyellow;
 }
 
 .variable:hover {
@@ -71,5 +71,5 @@ export default {
 .arrows line {
   fill: none;
 }
-    
+	
 </style>
