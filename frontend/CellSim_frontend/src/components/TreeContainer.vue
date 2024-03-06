@@ -5,7 +5,6 @@
             :components="components" 
             :connections="connections"
             :highlighted="highlighted"
-            :source_coords="source_coords"
             :isCollapsed="isCollapsed"
             @variable-hover="handleVariableHover"
         />
@@ -24,7 +23,6 @@ export default {
     data() {
         return {
             highlighted: [],
-            source_coords: {},
             isCollapsed: {}
         };
     },
@@ -35,26 +33,17 @@ export default {
         componentsInGroup: Array,
     },
     methods: {
-        handleVariableHover(hoveredVariableName, variable_x, variable_y, hoveredVariableMappings) {
-            console.log('In TreeContainer.vue:');
-            console.log('Hovered Variable Name:', hoveredVariableName);
-            console.log('Hovered Variable x coord:', variable_x);
-            console.log('Hovered Variable y coord:', variable_y);
-            console.log('Hovered Variable Mappings:', hoveredVariableMappings);
+        handleVariableHover(hoveredVariableName, hoveredVariableMappings) {
             this.highlighted = [];
             if (hoveredVariableMappings) {
                 for (const mapping of hoveredVariableMappings) {
                     this.highlighted.push(mapping);
                 }
             }
-            this.source_coords.x = variable_x;
-            this.source_coords.y = variable_y;
-            console.log('highlighted is now: ', this.highlighted);
         },
         isComponentInGroup(my_component) {
             for (const component of this.componentsInGroup) {
                 if (my_component.$.name == component.$.component) {
-                    console.log("In group: ", my_component);
                     return true;
                 }
             }

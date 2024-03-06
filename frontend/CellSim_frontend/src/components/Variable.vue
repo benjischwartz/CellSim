@@ -4,25 +4,6 @@
     @mouseenter="showMappings" 
     @mouseleave="hideMappings">
     {{ name }}
-    <!-- Don't need to print mappings anymore
-    <div v-if="isHovering">
-        <div v-for="mapping in variableMappings">
-            <VariableMapping :mapping="mapping"/>
-        </div>
-    </div>
-    -->
-    <!-- First attempt at arrow printing
-    <svg v-if="isHighlighted" class="arrows">
-        <line 
-        :x1="source_coords.x" 
-        :y1="source_coords.y" 
-        :x2="coords.x" 
-        :y2="coords.y"
-        stroke="black" 
-        stroke-width="2"
-        />
-    </svg>
-    -->
 </div>
 </template>
 
@@ -32,30 +13,15 @@ import VariableMapping from './VariableMapping.vue';
 export default {
     name: 'Variable',
     props: {
-        name: {
-            type: String,
-            required: true
-        },
-        component: {
-            type: String,
-            required: true
-        },
-        variableMappings: {
-            type: Array
-        },
-        highlighted: {
-            type: Array
-        },
-        source_coords: {
-            type: Object,
-            required: false
-        },
+        name: String,
+        component: String,
+        variableMappings: Array,
+        highlighted: Array,
     },
     computed: {
         isHighlighted() {
             if (!this.highlighted) return false;
             console.log("This variable is highlighted");
-            console.log("Source coords are", this.source_coords);
             return this.highlighted.some(mapping=> {
                 return (mapping.component === this.component && mapping.variable === this.name);
             });
@@ -73,24 +39,13 @@ export default {
         };
     },
     methods: {
-        getPosition() {
-            const rect = this.$el.getBoundingClientRect();
-            console.log(rect);
-            return {
-                x: rect.left,
-                y: rect.top,
-            };
-        },
         showMappings() {
-            console.log('Mouse entered');
             this.isHovering = true;
-            let coords = this.getPosition();
-            this.$emit('variable-hover', this.name, coords.x, coords.y, this.variableMappings);
+            this.$emit('variable-hover', this.name, this.variableMappings);
         },
         hideMappings() {
-            console.log('Mouse left');
             this.isHovering = false;
-            this.$emit('variable-hover', null, null, null, null);
+            this.$emit('variable-hover', null, null);
         },
     }
 }

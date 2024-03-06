@@ -42,7 +42,6 @@ export default {
     },
     methods: {
       getMappingsForVariable(variableName, componentName) {
-        console.log('connections are', this.connections)
         let mappings = [];
         for (let connection of this.connections) {
             if (connection.map_components[0].$.component_1 == componentName) {

@@ -77,11 +77,8 @@ export default {
        }
         return mappings;
     },
-    handleVariableHover(hoveredVariableName, variable_x, variable_y, hoveredVariableMappings) {
-        console.log('Hovered Variable Name:', hoveredVariableName);
-        console.log('Hovered Variable Mappings:', hoveredVariableMappings);
-        console.log('highlighted:', this.highlighted);
-        this.$emit('variable-hover', hoveredVariableName, variable_x, variable_y, hoveredVariableMappings);
+    handleVariableHover(hoveredVariableName, hoveredVariableMappings) {
+        this.$emit('variable-hover', hoveredVariableName, hoveredVariableMappings);
     },
     toggleCollapse(componentName) {
         this.isCollapsed[componentName] = !this.isCollapsed[componentName];
