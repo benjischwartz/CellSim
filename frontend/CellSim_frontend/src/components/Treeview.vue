@@ -13,8 +13,8 @@
 							<Variable 
 									:name=variable.$.name
 									:variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"
-									:highlighted="highlighted"
-									:component="component.$.name"
+									:highlighted=highlighted
+									:component=component.$.name
 									@variable-hover="handleVariableHover"
 									@variable-click="handleVariableClick"
 							/>
@@ -34,6 +34,7 @@
 					:highlighted="highlighted"
 					:isCollapsed="isCollapsed"
 					@variable-hover="handleVariableHover"
+					@variable-click="handleVariableClick"
 			/>
 	</div>
 
@@ -78,7 +79,7 @@ export default {
 		}
 		return mappings;
 	},
-	handleVariableHoever(hoveredVariableName, hoveredVariableMappings) {
+	handleVariableHover(hoveredVariableName, hoveredVariableMappings) {
 		this.$emit('variable-hover', hoveredVariableName, hoveredVariableMappings);
 	},
 	handleVariableClick(clickedVariableName, parentComponent, variableMappings) {

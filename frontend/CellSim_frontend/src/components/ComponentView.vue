@@ -8,7 +8,11 @@
 		</button>
 		<div v-if="component.variable && !isCollapsed[component.$.name]">
 			<div v-for="variable in component.variable">
-				<Variable :name=variable.$.name :variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"/>
+				<Variable 
+					:name=variable.$.name 
+					:variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"
+					@variable-click="handleVariableClick"
+				/>
 			</div>
 		</div>
 	</div>
@@ -73,7 +77,11 @@ export default {
 		},
 		toggleCollapse(componentName) {
 			this.isCollapsed[componentName] = !this.isCollapsed[componentName];
-		}
+		},
+		handleVariableClick(clickedVariableName, parentComponent, variableMappings) {
+			console.log("emitting from ComponentView");
+			this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings);
+		},
 	},
 	components: {
 		Variable,

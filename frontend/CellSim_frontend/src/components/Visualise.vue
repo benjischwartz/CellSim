@@ -10,13 +10,20 @@
 <br /><br />
 
 <div v-if="clickedVariableInfo">
-	<VariableInfo :propVariableInfo=clickedVariableInfo />
+	<VariableInfo 
+		:propVariableName=clickedVariableInfo.name
+		:propComponentName=clickedVariableInfo.component
+		:propVariableMappings=clickedVariableInfo.mappings
+	/>
 </div>
 <br /><br />
 
 <div v-if="jsData">
 	<h2>Component View</h2>
-	<ComponentView :propData=jsData /> 
+	<ComponentView 
+		:propData=jsData 
+		@variable-click="showVariableInfo"
+	/>
 </div>
 
 <div v-if="jsData">
@@ -46,9 +53,9 @@
 import TreeContainer from './TreeContainer.vue';
 import ComponentView from './ComponentView.vue';
 import VariableInfo from './VariableInfo.vue';
+import Variable from './Variable.vue';
 import axios from 'axios';
 import xml2js from 'xml2js';
-import Variable from './Variable.vue';
 
 export default {
 	name: 'visualise',
@@ -112,7 +119,9 @@ export default {
 			return components;
 		},
 		showVariableInfo(clickedVariableName, parentComponent, variableMappings) {
-			this.clickedVariableInfo = (clickedVariableName, parentComponent, variableMappings);
+			this.clickedVariableInfo['name'] = clickedVariableName;
+			this.clickedVariableInfo['component'] = parentComponent;
+			this.clickedVariableInfo['mappings'] = variableMappings;
 		},
 	},
 	components: {

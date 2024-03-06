@@ -1,10 +1,18 @@
 <template>
 <div class="variable-info">
-	<div>Variable: {{ propVariableInfo[0].variable }}</div>
+	<span>Variable: {{ propVariableName }}</span>
+	<div>
+		<input v-model="updateVariableName" type="text" placeholder="Update Variable Name...">
+		<button @click="updateVariableName">Update</button>
+	</div>
 	<hr>
-	<div>Parent Component: {{ propVariableInfo[1] }}</div>
+	<span>Component: {{ propComponentName }}</span>
 	<hr>
-	<div>Variable Mappings: {{  propVariableInfo[2] }}</div>
+	<div>Variable Mappings: 
+		<div v-for="mapping in propVariableMappings">
+			{{ propComponentName }} === {{ mapping.component }}
+		</div>
+	</div>
 </div>
 </template>
   
@@ -12,7 +20,19 @@
 export default {
 	name: 'VariableInfo',
 	props: {
-		propVariableInfo: Object,
+		propVariableName: String,
+		propComponentName: String,
+		propVariableMappings: Object,
+	},
+	data () {
+		return {
+			updateVariableName: '',
+		}
+	},
+	methods: {
+		updateVariableName() {
+			this.emit$('update-variable-name', this.updateVariableName);
+		}
 	}
 }
 </script>
@@ -28,6 +48,7 @@ export default {
   border-radius: 25px;
   padding: 0.5em;
   margin: 5px;
+	width: 300px;
   background: lightsalmon;
 }
 
