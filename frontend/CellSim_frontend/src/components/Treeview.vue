@@ -16,12 +16,13 @@
 									:highlighted="highlighted"
 									:component="component.$.name"
 									@variable-hover="handleVariableHover"
+									@variable-click="handleVariableClick"
 							/>
 					</div>
 					</div>
 				</div>
 			</div>
-			
+
 		</div>
 			<TreeView 
 					v-for="child in node.component_ref" 
@@ -77,8 +78,11 @@ export default {
 		}
 		return mappings;
 	},
-	handleVariableHover(hoveredVariableName, hoveredVariableMappings) {
+	handleVariableHoever(hoveredVariableName, hoveredVariableMappings) {
 		this.$emit('variable-hover', hoveredVariableName, hoveredVariableMappings);
+	},
+	handleVariableClick(clickedVariableName, parentComponent, variableMappings) {
+		this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings);
 	},
 	toggleCollapse(componentName) {
 			this.isCollapsed[componentName] = !this.isCollapsed[componentName];

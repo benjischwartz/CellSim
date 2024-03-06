@@ -7,7 +7,11 @@
 		<br /><br />
 		<button @click="sendData()">Visualize</button> <br /><br />
 </div>
+<br /><br />
 
+<div v-if="clickedVariableInfo">
+	<VariableInfo :propVariableInfo=clickedVariableInfo />
+</div>
 <br /><br />
 
 <div v-if="jsData">
@@ -27,7 +31,8 @@
 						:propData=component_ref 
 						:components=components 
 						:connections=connections
-						:componentsInGroup=getComponentsInGroup(group) 
+						:componentsInGroup=getComponentsInGroup(group)
+						@variable-click="showVariableInfo" 
 					/>
 				</div>
 			</div>
@@ -40,6 +45,7 @@
 <script>
 import TreeContainer from './TreeContainer.vue';
 import ComponentView from './ComponentView.vue';
+import VariableInfo from './VariableInfo.vue';
 import axios from 'axios';
 import xml2js from 'xml2js';
 import Variable from './Variable.vue';
@@ -52,6 +58,7 @@ export default {
 			resultData: null,
 			jsData: '',
 			isCollapsed: {},
+			clickedVariableInfo: {},
 		};
 	},
 	computed: {
@@ -104,11 +111,15 @@ export default {
 			getComponentsRecursive(group);
 			return components;
 		},
+		showVariableInfo(clickedVariableName, parentComponent, variableMappings) {
+			this.clickedVariableInfo = (clickedVariableName, parentComponent, variableMappings);
+		},
 	},
 	components: {
 		TreeContainer,
 		Variable,
 		ComponentView,
+		VariableInfo,
 	},
 };
 

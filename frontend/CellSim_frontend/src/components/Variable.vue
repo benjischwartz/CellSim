@@ -2,7 +2,8 @@
 <div class=variable 
 	:class="{ 'highlighted': isHighlighted }"
 	@mouseenter="showMappings" 
-	@mouseleave="hideMappings">
+	@mouseleave="hideMappings"
+	@click="handleClick">
 	{{ name }}
 </div>
 </template>
@@ -47,6 +48,9 @@ export default {
 			this.isHovering = false;
 			this.$emit('variable-hover', null, null);
 		},
+		handleClick() {
+			this.$emit('variable-click', this.name, this.component, this.variableMappings);
+		}
 	}
 }
 </script>

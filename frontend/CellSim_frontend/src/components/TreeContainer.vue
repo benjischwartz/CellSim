@@ -7,6 +7,7 @@
 		:highlighted="highlighted"
 		:isCollapsed="isCollapsed"
 		@variable-hover="handleVariableHover"
+		@variable-click="handleVariableClick"
 	/>
 </div>
 </template>
@@ -40,6 +41,9 @@ export default {
 					this.highlighted.push(mapping);
 				}
 			}
+		},
+		handleVariableClick(clickedVariableName, parentComponent, variableMappings) {
+			this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings);
 		},
 		isComponentInGroup(my_component) {
 			for (const component of this.componentsInGroup) {
