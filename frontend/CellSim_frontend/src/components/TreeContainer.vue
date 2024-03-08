@@ -42,8 +42,8 @@ export default {
 				}
 			}
 		},
-		handleVariableClick(clickedVariableName, parentComponent, variableMappings) {
-			this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings);
+		handleVariableClick(clickedVariableName, parentComponent, variableMappings, variableUnits) {
+			this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings, variableUnits);
 		},
 		isComponentInGroup(my_component) {
 			for (const component of this.componentsInGroup) {

@@ -13,16 +13,26 @@
 			{{ propComponentName }} === {{ mapping.component }}
 		</div>
 	</div>
+	<hr>
+	<span>Units: {{ propVariableUnits }}</span>
+	<hr>
+	<div>
+		<MathVisualiser :propEquation=this.propEquation></MathVisualiser>
+	</div>
 </div>
 </template>
   
 <script>
+import MathVisualiser from './MathVisualiser.vue';
+
 export default {
 	name: 'VariableInfo',
 	props: {
 		propVariableName: String,
 		propComponentName: String,
 		propVariableMappings: Object,
+		propVariableUnits: String,
+		propEquation: String,
 	},
 	data () {
 		return {
@@ -33,6 +43,9 @@ export default {
 		updateVariableName() {
 			this.emit$('update-variable-name', this.updateVariableName);
 		}
+	},
+	components: {
+		MathVisualiser,
 	}
 }
 </script>

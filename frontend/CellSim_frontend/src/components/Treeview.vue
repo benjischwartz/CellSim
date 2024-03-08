@@ -15,6 +15,7 @@
 									:variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"
 									:highlighted=highlighted
 									:component=component.$.name
+									:units=variable.$.units
 									@variable-hover="handleVariableHover"
 									@variable-click="handleVariableClick"
 							/>
@@ -61,16 +62,22 @@ export default {
 	getMappingsForVariable(variableName, componentName) {
 		let mappings = [];
 		for (let connection of this.connections) {
+			//if (connection.$.component_1 == componentName) {
 			if (connection.map_components[0].$.component_1 == componentName) {
 				for (let mapping of connection.map_variables) {
 					if (mapping.$.variable_1 == variableName) {
+						//mappings.push({component: connection.$.component_2,
+												//variable: mapping.$.variable_2});
 						mappings.push({component: connection.map_components[0].$.component_2,
 												variable: mapping.$.variable_2});
 					}
 				}
+			//} else if (connection.$.component_2 == componentName) {
 			} else if (connection.map_components[0].$.component_2 == componentName) {
 				for (let mapping of connection.map_variables) {
 					if (mapping.$.variable_2 == variableName) {
+						//mappings.push({component: connection.$.component_1,
+													//variable: mapping.$.variable_1});
 						mappings.push({component: connection.map_components[0].$.component_1,
 													variable: mapping.$.variable_1});
 					}
@@ -82,8 +89,8 @@ export default {
 	handleVariableHover(hoveredVariableName, hoveredVariableMappings) {
 		this.$emit('variable-hover', hoveredVariableName, hoveredVariableMappings);
 	},
-	handleVariableClick(clickedVariableName, parentComponent, variableMappings) {
-		this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings);
+	handleVariableClick(clickedVariableName, parentComponent, variableMappings, variableUnits) {
+		this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings, variableUnits);
 	},
 	toggleCollapse(componentName) {
 			this.isCollapsed[componentName] = !this.isCollapsed[componentName];

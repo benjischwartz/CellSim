@@ -14,6 +14,8 @@
 		:propVariableName=clickedVariableInfo.name
 		:propComponentName=clickedVariableInfo.component
 		:propVariableMappings=clickedVariableInfo.mappings
+		:propVariableUnits=clickedVariableInfo.units
+		:propEquation=clickedVariableInfo.equation
 	/>
 </div>
 <br /><br />
@@ -105,6 +107,14 @@ export default {
 				console.log('js -> %s', str);
 			});
 		},
+		async getEquation(componentName) 
+		{
+			const result = await axios.post('http://localhost:8000/api/getEquation', {
+				component: componentName,
+			});
+			console.log("get equation result: ", result);
+			return result;
+		},
 		getComponentsInGroup(group) {
 			let components = [];
 			const getComponentsRecursive = (node) => {
@@ -118,10 +128,13 @@ export default {
 			getComponentsRecursive(group);
 			return components;
 		},
-		showVariableInfo(clickedVariableName, parentComponent, variableMappings) {
+		showVariableInfo(clickedVariableName, parentComponent, variableMappings, variableUnits, variableEquation) {
 			this.clickedVariableInfo['name'] = clickedVariableName;
 			this.clickedVariableInfo['component'] = parentComponent;
 			this.clickedVariableInfo['mappings'] = variableMappings;
+			this.clickedVariableInfo['units'] = variableUnits;
+			this.clickedVariableInfo['equation'] = this.getEquation(parentComponent);
+			//this.clickedVariableInfo['equation'] = '';
 		},
 	},
 	components: {

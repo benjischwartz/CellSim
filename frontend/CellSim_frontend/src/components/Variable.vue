@@ -16,6 +16,7 @@ export default {
 	props: {
 		name: String,
 		component: String,
+		units: String,
 		variableMappings: Array,
 		highlighted: Array,
 	},
@@ -49,7 +50,7 @@ export default {
 			this.$emit('variable-hover', null, null);
 		},
 		handleClick() {
-			this.$emit('variable-click', this.name, this.component, this.variableMappings);
+			this.$emit('variable-click', this.name, this.component, this.variableMappings, this.units);
 		}
 	}
 }

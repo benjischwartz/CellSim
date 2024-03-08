@@ -50,19 +50,27 @@ export default {
 	methods: {
 		getMappingsForVariable(variableName, componentName) {
 			let mappings = [];
-			for (let connection of this.connections) {
-				if (connection.map_components[0].$.component_1 == componentName) {
-					for (let mapping of connection.map_variables) {
-						if (mapping.$.variable_1 == variableName) {
-							mappings.push({component: connection.map_components[0].$.component_2,
-													variable: mapping.$.variable_2});
+			if (this.connections) {
+				for (let connection of this.connections) {
+					//if (connection.$.component_1 == componentName) {
+					if (connection.map_components[0].$.component_1 == componentName) {
+						for (let mapping of connection.map_variables) {
+							if (mapping.$.variable_1 == variableName) {
+								//mappings.push({component: connection.$.component_2,
+												//variable: mapping.$.variable_2});
+								mappings.push({component: connection.map_components[0].$.component_2,
+												variable: mapping.$.variable_2});
+							}
 						}
-					}
-				} else if (connection.map_components[0].$.component_2 == componentName) {
-					for (let mapping of connection.map_variables) {
-						if (mapping.$.variable_2 == variableName) {
-							mappings.push({component: connection.map_components[0].$.component_1,
-													variable: mapping.$.variable_1});
+					//} else if (connection.$.component_2 == componentName) {
+					} else if (connection.map_components[0].$.component_2 == componentName) {
+						for (let mapping of connection.map_variables) {
+							if (mapping.$.variable_2 == variableName) {
+								//mappings.push({component: connection.$.component_1,
+												//variable: mapping.$.variable_1});
+								mappings.push({component: connection.map_components[0].$.component_1,
+												variable: mapping.$.variable_1});
+							}
 						}
 					}
 				}
