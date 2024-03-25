@@ -1,22 +1,19 @@
 <template>
 <div class="variable-info">
-	<span>Variable: {{ propVariableName }}</span>
-	<div>
-		<input v-model="updateVariableName" type="text" placeholder="Update Variable Name...">
-		<button @click="updateVariableName">Update</button>
-	</div>
+	<span><b>Variable:</b> {{ propVariableName }}</span>
 	<hr>
-	<span>Component: {{ propComponentName }}</span>
+	<span><b>Component:</b> {{ propComponentName }}</span>
 	<hr>
-	<div>Variable Mappings: 
+	<div><b>Variable Mappings:</b> 
 		<div v-for="mapping in propVariableMappings">
 			{{ propComponentName }} === {{ mapping.component }}
 		</div>
 	</div>
 	<hr>
-	<span>Units: {{ propVariableUnits }}</span>
+	<span><b>Units: </b>{{ propVariableUnits }}</span>
 	<hr>
 	<div>
+	<span> <b>Equation:</b> </span>
 		<MathVisualiser :propEquation=this.propEquation></MathVisualiser>
 	</div>
 </div>
@@ -61,8 +58,8 @@ export default {
   border-radius: 25px;
   padding: 0.5em;
   margin: 5px;
-	width: 300px;
-  background: lightsalmon;
+	width: 500px;
+  background: beige;
 }
 
 .variable-info hr {

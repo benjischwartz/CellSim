@@ -1,15 +1,46 @@
 <template>
 <div>
-		<h1>Visualize CellML File</h1>
-		<input type="file" @change="handleFileUpload" accept=".xml" />
-		<br /><br />
-		<textarea name="file" v-model="file" placeholder="Or paste File Data Here"></textarea> 
-		<br /><br />
-		<button @click="sendData()">Visualize</button> <br /><br />
+	<h1>Visualize CellML File</h1>
+	<input type="file" @change="handleFileUpload" accept=".xml" />
+	<br /><br />
+	<textarea name="file" v-model="file" placeholder="Paste File Data Here" class="upload-section"></textarea> 
+	<br /><br />
+	<button @click="sendData()">Visualize</button> <br /><br />
 </div>
 <br /><br />
 
-<div v-if="clickedVariableInfo">
+<div>
+	<div class = "dropzone"
+		@dragover.prevent="dragOver"
+		@drop.prevent="dropFiles"
+		@click="selectFiles">
+		<p v-if="files.length === 0">Upload dependencies: drag files here or click to upload</p>
+		<ul v-else>
+			<li v-for="(file, index) in files" :key="index">
+				{{ file.name }}
+				<button @click="removeFile(index)">Remove</button>
+			</li>
+		</ul>
+	</div>
+	<input
+		type="file"
+		ref="fileInput"
+		multiple
+		style="display: none"
+		@change="handleFileInputChange" />
+	<button @click="submitFiles">Submit</button>
+</div>
+<br /><br />
+<div v-if="this.filesUploaded.length != 0">
+	<h2> Files uploaded: </h2>
+	<div v-for="file in filesUploaded">
+	{{ file.name }}
+	</div>	
+</div>
+<br /><br />
+<br /><br />
+
+<div v-if="this.jsData">
 	<VariableInfo 
 		:propVariableName=clickedVariableInfo.name
 		:propComponentName=clickedVariableInfo.component
@@ -20,6 +51,10 @@
 </div>
 <br /><br />
 
+<div v-if=errorData>
+	<h2> Error! </h2>{{ errorData }}
+</div>
+
 <div v-if="jsData">
 	<h2>Component View</h2>
 	<ComponentView 
@@ -27,23 +62,37 @@
 		@variable-click="showVariableInfo"
 	/>
 </div>
+<br /><br />
 
-<div v-if="jsData">
-	<h2> Tree View </h2>
+<div v-if="this.jsData && encapsulation">
+	<h2> Encapuslation </h2>
 	<div class= "group-wrapper">
-		<div v-for="group in groups">
-			<!-- get containment relationships -->
-			<h3> {{ group.relationship_ref[0].$.relationship}} {{ "relationship" }} </h3>
-			<div>
-				<div v-for="component_ref in group.component_ref">
-					<TreeContainer 
-						:propData=component_ref 
-						:components=components 
-						:connections=connections
-						:componentsInGroup=getComponentsInGroup(group)
-						@variable-click="showVariableInfo" 
-					/>
-				</div>
+		<div v-for="group in encapsulation">
+			<div v-for="component_ref in group.component_ref">
+				<TreeContainer 
+					:propData=component_ref 
+					:components=components 
+					:connections=connections
+					:componentsInGroup=getComponentsInGroup(group)
+					@variable-click="showVariableInfo" 
+				/>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div v-if="this.jsData && containment">
+	<h2> Containment </h2>
+	<div class= "group-wrapper">
+		<div v-for="group in containment">
+			<div v-for="component_ref in group.component_ref">
+				<TreeContainer 
+					:propData=component_ref 
+					:components=components 
+					:connections=connections
+					:componentsInGroup=getComponentsInGroup(group)
+					@variable-click="showVariableInfo" 
+				/>
 			</div>
 		</div>
 	</div>
@@ -64,7 +113,10 @@ export default {
 	data() {
 		return {
 			file: '',
+			files: [],
+			filesUploaded: [],
 			resultData: null,
+			errorData: null,
 			jsData: '',
 			isCollapsed: {},
 			clickedVariableInfo: {},
@@ -77,8 +129,11 @@ export default {
 		connections: function() {
 			return this.jsData.model.connection;
 		},
-		groups: function() {
-			return this.jsData.model.group;
+		encapsulation: function() {
+			return this.jsData.model.encapsulation;
+		},
+		containment: function() {
+			return this.jsData.model.containment;
 		},
 	},
 	methods: {
@@ -93,27 +148,35 @@ export default {
 			}
 		},
 		async sendData() {
-			const result = await axios.post('http://localhost:8000/api/visualise', {
-				file: this.file,
-			});
-			this.resultData = result;
-			console.warn('function called', this.file);
-			xml2js.parseString(this.file, (err, result) => {
-				if (err) {
-					throw err;
-				}
-				this.jsData = result;
-				const str = JSON.stringify(result, null, 2);
-				console.log('js -> %s', str);
-			});
+			try {
+				const result = await axios.post('http://localhost:8000/api/visualise', {
+					file: this.file,
+				});
+				console.log(result)
+				console.log('flattened model %s', result.data);
+				this.resultData = result.data;
+				xml2js.parseString(result.data, (err, result) => {
+					if (err) {
+						throw err;
+					}
+					this.jsData = result;
+					const str = JSON.stringify(result, null, 2);
+					console.log('js -> %s', str);
+				});
+			} catch (error) {
+				console.error('An error occurred:', error);
+				this.errorData = error.response.data
+				this.jsData = null
+			}
 		},
 		async getEquation(componentName) 
 		{
+			console.log("component name %s", componentName);
 			const result = await axios.post('http://localhost:8000/api/getEquation', {
 				component: componentName,
 			});
-			console.log("get equation result: ", result);
-			return result;
+			console.log("get equation result: ", result.data);
+			return result.data;
 		},
 		getComponentsInGroup(group) {
 			let components = [];
@@ -128,14 +191,55 @@ export default {
 			getComponentsRecursive(group);
 			return components;
 		},
-		showVariableInfo(clickedVariableName, parentComponent, variableMappings, variableUnits, variableEquation) {
+		async showVariableInfo(clickedVariableName, parentComponent, variableMappings, variableUnits, variableEquation) {
 			this.clickedVariableInfo['name'] = clickedVariableName;
 			this.clickedVariableInfo['component'] = parentComponent;
 			this.clickedVariableInfo['mappings'] = variableMappings;
 			this.clickedVariableInfo['units'] = variableUnits;
-			this.clickedVariableInfo['equation'] = this.getEquation(parentComponent);
-			//this.clickedVariableInfo['equation'] = '';
+			this.clickedVariableInfo['equation'] = await this.getEquation(parentComponent);
 		},
+		dragOver(event) {
+			event.preventDefault();
+		},
+		dropFiles(event) {
+			event.preventDefault();
+			this.addFiles(event.dataTransfer.files);
+		},
+		selectFiles() {
+			this.$refs.fileInput.click();
+		},
+		handleFileInputChange(event) {
+			this.addFiles(event.target.files);
+		},
+		addFiles(newFiles) {
+			for (let i = 0; i < newFiles.length; i++) {
+				this.files.push(newFiles[i]);
+			}
+		},
+		removeFile(index) {
+			this.files.splice(index, 1);
+			this.filesUploaded.splice(index, 1);
+		},
+		async submitFiles() {
+			const formData = new FormData();
+			this.errorData = null;
+			for (let i = 0; i < this.files.length; i++) {
+				formData.append('files[]', this.files[i]);
+				this.filesUploaded.push(this.files[i]);
+			}
+			try {
+				const result = await axios.post('http://localhost:8000/api/uploadDependencies', formData, {
+					headers: {
+						'Content-Type': 'multipart/form-data'
+					}
+				});
+				console.log('Upload successful:', result);
+				this.files = []
+			} catch (error) {
+				console.error('Error uploading files: ', error);
+			}
+			
+		}
 	},
 	components: {
 		TreeContainer,
@@ -149,11 +253,32 @@ export default {
 
 <style>
 
+.upload-section {
+	width: 750px;
+	padding: 20px;
+}
+
 .group-wrapper {
 	display: flex;
 	border-radius: 25px;
 	flex-direction: column;
 	gap: 10px 20px;
+}
+
+.dropzone {
+	border: 2px dashed #ccc;
+	padding: 20px;
+	text-align: center;
+	cursor: pointer;
+}
+
+.dropzone ul {
+	list-style-type: none;
+	padding: 0;
+}
+
+.dropzone li {
+	margin-bottom: 5px;
 }
 
 </style>

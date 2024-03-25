@@ -1,21 +1,28 @@
 <template>
-	<div>
-		<textarea v-model="formula" cols="30" rows="10"></textarea>
-  	<vue-mathjax :formula="propEquation"></vue-mathjax>
-	</div>
-</template>
-	
-<script>
-import VueMathjax from 'vue-mathjax-next'
-
-export default {
-	name: 'MathVisualizer',
+	<div v-html="equation"></div>
+  </template>
+  
+  <script>
+  export default {
 	props: {
-		propEquation: String,
+	  propEquation: String,
 	},
-	components: {
-		'vue-mathjax': VueMathjax
+	data() {
+	  return {
+		equation: ''
+	  };
+	},
+	watch: {
+	  propEquation: {
+		immediate: true,
+		handler(newVal) {
+		  this.equation = newVal;
+		  // Render MathJax
+		  if (window.MathJax) {
+			window.MathJax.typesetPromise();
+		  }
+		}
+	  }
 	}
-}
-</script>
-	
+  };
+  </script>

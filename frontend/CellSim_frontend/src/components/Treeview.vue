@@ -62,24 +62,24 @@ export default {
 	getMappingsForVariable(variableName, componentName) {
 		let mappings = [];
 		for (let connection of this.connections) {
-			//if (connection.$.component_1 == componentName) {
-			if (connection.map_components[0].$.component_1 == componentName) {
+			if (connection.$.component_1 == componentName) {
+			//if (connection.map_components[0].$.component_1 == componentName) {
 				for (let mapping of connection.map_variables) {
 					if (mapping.$.variable_1 == variableName) {
-						//mappings.push({component: connection.$.component_2,
-												//variable: mapping.$.variable_2});
-						mappings.push({component: connection.map_components[0].$.component_2,
+						mappings.push({component: connection.$.component_2,
 												variable: mapping.$.variable_2});
+						//mappings.push({component: connection.map_components[0].$.component_2,
+												//variable: mapping.$.variable_2});
 					}
 				}
-			//} else if (connection.$.component_2 == componentName) {
-			} else if (connection.map_components[0].$.component_2 == componentName) {
+			} else if (connection.$.component_2 == componentName) {
+			//} else if (connection.map_components[0].$.component_2 == componentName) {
 				for (let mapping of connection.map_variables) {
 					if (mapping.$.variable_2 == variableName) {
-						//mappings.push({component: connection.$.component_1,
-													//variable: mapping.$.variable_1});
-						mappings.push({component: connection.map_components[0].$.component_1,
+						mappings.push({component: connection.$.component_1,
 													variable: mapping.$.variable_1});
+						//mappings.push({component: connection.map_components[0].$.component_1,
+													//variable: mapping.$.variable_1});
 					}
 				}
 			}
@@ -141,6 +141,9 @@ export default {
 	position: absolute;
 	top: 10px;
 	right: 10px;
+	padding: 5px; /* Adjust padding to make button smaller */
+	font-size: 12px; /* Adjust font size */
+	border-radius: 3px; /* Adjust border radius */
 }
 
 .collapsed {

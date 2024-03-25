@@ -1,7 +1,6 @@
 import './assets/main.css'
 
 import { createApp } from 'vue'
-import vueMathjax from 'vue-mathjax-next'
 import App from './App.vue'
 import router from './router'
 

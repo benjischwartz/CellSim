@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include <algorithm>
-#include <map>
 #include <string> // required for std::string
 #include <sys/types.h> // required for stat.h
 #include <sys/stat.h> 
@@ -10,6 +10,7 @@
 #include "libcellml/analyser.h"
 #include "libcellml/annotator.h"
 #include "libcellml/model.h"
+#include "libcellml/importer.h"
 #include "libcellml/printer.h"
 #include "libcellml/validator.h"
 #include "libcellml/variable.h"
@@ -18,7 +19,6 @@
 #include "libcellml/units.h"
 #include "libcellml/component.h"
 #include "libcellml/types.h"
-#include "libcellml/importsource.h"
 #include "mongoose.h"
 
 // Forward declare helper functions
@@ -38,6 +38,9 @@ std::string create_issue_list(libcellml::ValidatorPtr &validator);
 std::string create_visualised_string(libcellml::ModelPtr &model);
 
 static const char *s_http_addr = "http://localhost:8000";  // HTTP port
+static std::string directory_name = "resources";
+
+namespace fs = std::filesystem;
 
 // Local copy of model
 auto local_model = libcellml::Model::create();
@@ -57,7 +60,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
      
       // Attempt to fetch a JSON string from the body, hm->body
       struct mg_str file = hm->body;
-      char *file_str = mg_json_get_str(file, "$.file");
+      std::string file_str = mg_json_get_str(file, "$.file");
       std::cout << "Extracted string is...\n" << file_str << std::endl;
       
       // Create model
@@ -81,21 +84,99 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
                         "Access-Control-Request-Method: POST\r\n"
                         "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
                         "{\"Number of issues\": %d, \"Issue List\": %s}", numIssues, issueList.c_str());
+    } else if (mg_http_match_uri(hm, "/api/uploadDependencies")) {
+
+        if (!fs::exists(directory_name)) {
+            if (fs::create_directory(directory_name)) {
+                std::cout << "Directory created: " << directory_name;
+            } else {
+                std::cerr << "Failed to create directory: " << directory_name;
+            }
+        }
+        struct mg_str body = hm->body;
+        struct mg_http_part part;
+        size_t pos = 0;
+
+        while ((pos = mg_http_next_multipart(body, pos, &part)) != 0) {
+            MG_INFO(("Chunk name: [%.*s] filename: [%.*s] length: %lu bytes",
+                    part.name.len, part.name.ptr,
+                    part.filename.len, part.filename.ptr, part.body.len));
+            std::cout << part.body.ptr << std::endl;
+            // Use this chunk ....
+            std::string filename = directory_name + '/' + std::string(part.filename.ptr, part.filename.len);
+            
+            std::cout << "filename is: " << filename << std::endl;
+            std::ofstream file(filename);
+            if (!file.is_open()) {
+                std::cerr<< "Failed to create file: " << filename << std::endl;
+            } else {
+                std::cout << "Opened file!" << std::endl;
+            }
+
+            std::string data = std::string(part.body.ptr, part.body.len);
+            std::cout << "Data is: " << data << std::endl;
+            file << data;
+            file.close();
+        }
+
+        mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                              "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+							  "{\"Uploaded Dependencies!\": %d}", 200);
+        
     } else if (mg_http_match_uri(hm, "/api/visualise")) {
      
-      // Attempt to fetch a JSON string from the body, hm->body
-      struct mg_str file = hm->body;
-      char *file_str = mg_json_get_str(file, "$.file");
-      std::cout << "Extracted string is...\n" << file_str << std::endl;
-      
-      // Create model
-      auto parser = libcellml::Parser::create();
-      auto model = parser->parseModel(file_str);
+        // Attempt to fetch a JSON string from the body, hm->body
+        struct mg_str file = hm->body;
+        char *file_str = mg_json_get_str(file, "$.file");
+        std::cout << "Extracted string is...\n" << file_str << std::endl;
+        
+        // Create model
+        auto parser = libcellml::Parser::create();
+        auto model = parser->parseModel(file_str);
+        if (parser->issueCount() != 0) {
+            std::cout << "ERROR PARSING" << std::endl;
+            mg_http_reply(c, 400, "Content-Type: application/json\r\n"
+                                "Access-Control-Allow-Headers: content-type\r\n"
+                                "Access-Control-Request-Method: POST\r\n"
+                                "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                                "Error parsing file");
+            return;
+        }
 
-      std::string text = create_visualised_string(model);
+        // Resolve imports
+        if(model->hasUnresolvedImports()) {
+            std::cout << "Resolving imports\n";
+            auto importer = libcellml::Importer::create();
+            importer->resolveImports(model, directory_name);
+            if (importer->issueCount())
+            {
+                std::stringstream stream;
+                auto * old = std::cout.rdbuf(stream.rdbuf());
+                printIssues(importer);
+                printImportDependencies(model);
+                std::cout.rdbuf(old);
+                std::string err = stream.str();
+                mg_http_reply(c, 400, "Content-Type: application/json\r\n"
+                                    "Access-Control-Allow-Headers: content-type\r\n"
+                                    "Access-Control-Request-Method: POST\r\n"
+                                    "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                                    "%s", err.c_str());
+                return;
+            }
+            model = importer->flattenModel(model);
+            printImportDependencies(model);
+        }
+        local_model = model;
+        std::cout << "in visualise, printing local model...\n";
+        printModel(model, true);
+        std::cout << "from file string..." << file_str << std::endl;
 
-	  // http reply
-      mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+        auto printer = libcellml::Printer::create();
+        std::string text = printer->printModel(local_model);
+        std::cout << "Local model after flattening: " << text << std::endl;
+
+        // http reply
+        mg_http_reply(c, 200, "Content-Type: application/json\r\n"
                         "Access-Control-Allow-Headers: content-type\r\n"
                         "Access-Control-Request-Method: POST\r\n"
                         "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
@@ -163,7 +244,6 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           } 
           // ADD PARENT COMPONENT 
           else if (edit_type.compare("add_component") == 0) {
-              std::cout << "HERE\n";
               std::string component_name = mg_json_get_str(file, "$.component_name");
               std::cout << "Extracted component name is... " << component_name << std::endl;
               auto new_component = libcellml::Component::create(component_name);
@@ -171,7 +251,6 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           } 
           // ADD CHILD COMPONENT 
           else if (edit_type.compare("add_child_component") == 0) {
-              std::cout << "HERE\n";
               std::string component_name = mg_json_get_str(file, "$.component_name");
               std::cout << "parent name: " << component_name << std::endl;
               std::string child_component_name = mg_json_get_str(file, "$.child_component_name");
@@ -185,7 +264,6 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           } 
           // ADD VARIABLE 
           else if (edit_type.compare("add_variable") == 0) {
-              std::cout << "HERE\n";
               std::string component_name = mg_json_get_str(file, "$.component_name");
               std::cout << "component name: " << component_name << std::endl;
               std::string variable_name = mg_json_get_str(file, "$.variable_name");
@@ -210,6 +288,23 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           mg_http_printf_chunk(c, "%s", "*separator*");
           mg_http_printf_chunk(c, "%s", visualised_str.c_str());
           mg_http_printf_chunk(c, "");  // Don't forget the last empty chunk
+    } else if (mg_http_match_uri(hm, "/api/getEquation")) {
+          // Extract model name and id
+          struct mg_str data = hm->body;
+          std::cout << "in get equation, data is: " << data.ptr << std::endl;
+          std::cout << "HERE!"<< std::endl;
+          std::cout << "local model is: " << local_model->unitsCount() << std::endl;
+          char *component_name = mg_json_get_str(data, "$.component");
+          std::cout << "Extracted component name is... " << component_name << std::endl;
+          libcellml::ComponentPtr component = local_model->component(component_name);
+          std::string equation = component->math();
+          std::cout << "Sending equation: " << equation.c_str() << std::endl;
+          mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                            "Access-Control-Allow-Headers: content-type\r\n"
+                            "Access-Control-Request-Method: POST\r\n"
+                            "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                            "%s", equation.c_str());
+
     } else {
       // struct mg_http_serve_opts opts = {.root_dir = s_root_dir};
       // mg_http_serve_dir(c, hm, &opts);
@@ -235,6 +330,7 @@ int main(void) {
 	for (;;) mg_mgr_poll(&mgr, 1000);             // Infinite event loop
 	mg_mgr_free(&mgr);
 	return 0;
+
 }
 
 std::string create_issue_list(libcellml::ValidatorPtr &validator) {
@@ -309,7 +405,7 @@ void printModel(libcellml::ModelPtr &model, bool includeMaths)
         if(model->units(u)->isImport()) {
             std::cout << ", imported from: '";
             std::cout << model->units(u)->importReference();
-            std::cout << "' in '"<<model->units(u)->importSource()->url() << "'";
+            //std::cout << "' in '"<<model->units(u)->importSource()->url() << "'";
         }
         std::cout << std::endl;
     }
@@ -338,7 +434,7 @@ void printComponentToTerminal(const libcellml::ComponentPtr &component, size_t c
     if(component->isImport()) {
             std::cout << " <--- imported from: '";
             std::cout << component->importReference();
-            std::cout << "' in '" << component->importSource()->url() << "'";
+            //std::cout << "' in '" << component->importSource()->url() << "'";
     }
     std::cout << std::endl;
 
@@ -408,7 +504,7 @@ void printIssues(const libcellml::LoggerPtr &item) {
     // return issues of all levels.  To retrieve the total number of a specific level
     // of issues, use the errorCount(), warningCount(), hintCount(), or messageCount() functions. 
     size_t num = item->issueCount();
-    std::cout << "Recorded " << num << " issues";
+    std::cout << "Recorded " << num << " issues\n\n" << std::endl;
 
     if (num != 0) {
         std::cout << ":" << std::endl;
@@ -424,7 +520,7 @@ void printIssues(const libcellml::LoggerPtr &item) {
             std::string errorReference = issue->referenceHeading();
 
             // The level of an issue is retrieved using the level() function as an enum value.  
-            std::cout << "Issue " << i << " is " << getIssueLevelFromEnum(issue->level()) << ":" << std::endl;
+            std::cout << "\n\nIssue " << i << " is " << getIssueLevelFromEnum(issue->level()) << ":" << std::endl;
 
             // Each issue has a descriptive text field, accessible through the description() function.
             std::cout << "    Description: " << issue->description() << std::endl;
@@ -435,7 +531,7 @@ void printIssues(const libcellml::LoggerPtr &item) {
 
             // An optional URL is given for some issues which directs the user to more detailed information.
             if(!issue->url().empty()){
-                std::cout << "    More information is available at: " <<issue->url() << std::endl;
+                std::cout << "    More information is available at: " <<issue->url() << std::endl << std::endl;
             }
 
             // Each issue is associated with an item.  In order to properly deal with the item stored, its type is 

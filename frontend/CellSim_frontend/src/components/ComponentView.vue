@@ -1,5 +1,8 @@
 <template>
 <div class="container">
+	<button class="collapse-all-button" @click="toggleContainerCollapse">
+      {{ isContainerCollapsed ? 'Expand All' : 'Collapse All' }}
+    </button>
 	<div class="{ 'component': true, 'collapsed': isCollapsed }" v-for="component in components">
 		<div class="name">{{ component.$.name }} </div>
 		<button 
@@ -10,6 +13,7 @@
 			<div v-for="variable in component.variable">
 				<Variable 
 					:name=variable.$.name 
+					:component=component.$.name
 					:variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"
 					@variable-click="handleVariableClick"
 				/>
@@ -29,6 +33,7 @@ export default {
 	data() {
 		return {            
 			isCollapsed: {},
+			isContainerCollapsed: false 
 		} 
 	},
 	computed: {
@@ -52,24 +57,24 @@ export default {
 			let mappings = [];
 			if (this.connections) {
 				for (let connection of this.connections) {
-					//if (connection.$.component_1 == componentName) {
-					if (connection.map_components[0].$.component_1 == componentName) {
+					if (connection.$.component_1 == componentName) {
+					//if (connection.map_components[0].$.component_1 == componentName) {
 						for (let mapping of connection.map_variables) {
 							if (mapping.$.variable_1 == variableName) {
-								//mappings.push({component: connection.$.component_2,
-												//variable: mapping.$.variable_2});
-								mappings.push({component: connection.map_components[0].$.component_2,
+								mappings.push({component: connection.$.component_2,
 												variable: mapping.$.variable_2});
+								//mappings.push({component: connection.map_components[0].$.component_2,
+												//variable: mapping.$.variable_2});
 							}
 						}
-					//} else if (connection.$.component_2 == componentName) {
-					} else if (connection.map_components[0].$.component_2 == componentName) {
+					} else if (connection.$.component_2 == componentName) {
+					//} else if (connection.map_components[0].$.component_2 == componentName) {
 						for (let mapping of connection.map_variables) {
 							if (mapping.$.variable_2 == variableName) {
-								//mappings.push({component: connection.$.component_1,
-												//variable: mapping.$.variable_1});
-								mappings.push({component: connection.map_components[0].$.component_1,
+								mappings.push({component: connection.$.component_1,
 												variable: mapping.$.variable_1});
+								//mappings.push({component: connection.map_components[0].$.component_1,
+												//variable: mapping.$.variable_1});
 							}
 						}
 					}
@@ -90,6 +95,15 @@ export default {
 			console.log("emitting from ComponentView");
 			this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings);
 		},
+		toggleContainerCollapse() {
+			// Toggle the overall container collapse state
+			this.isContainerCollapsed = !this.isContainerCollapsed;
+			
+			// Update collapse state for all child components accordingly
+			for (const component of this.components) {
+				this.isCollapsed[component.$.name] = this.isContainerCollapsed;
+		}
+    },
 	},
 	components: {
 		Variable,
@@ -99,6 +113,7 @@ export default {
 
 <style>
 .container {
+	position: relative;
 	display: flex;
 	background: antiquewhite; 
 	margin: 1em;
@@ -106,6 +121,7 @@ export default {
 	padding: 1em;
 	border-radius: 25px;
 	gap: 10px 20px;
+	width: 800px
 }
 
 .component {
@@ -123,6 +139,18 @@ export default {
 .collapse-button {
 	top: 10px;
 	right: 10px;
+	padding: 5px; /* Adjust padding to make button smaller */
+	font-size: 12px; /* Adjust font size */
+	border-radius: 3px; /* Adjust border radius */
+}
+
+.collapse-all-button {
+  position: absolute; /* Position button relative to the container */
+  top: 5px; /* Adjust top position */
+  right: 5px; /* Adjust right position */
+  padding: 5px; /* Adjust padding to make button smaller */
+  font-size: 12px; /* Adjust font size */
+  border-radius: 3px; /* Adjust border radius */
 }
 
 .collapsed {
