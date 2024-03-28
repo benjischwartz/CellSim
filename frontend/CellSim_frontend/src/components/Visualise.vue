@@ -60,6 +60,8 @@
 	<ComponentView 
 		:propData=jsData 
 		@variable-click="showVariableInfo"
+		@add-component="addComponent"
+		@add-variable="addVariable"
 	/>
 </div>
 <br /><br />
@@ -239,7 +241,60 @@ export default {
 				console.error('Error uploading files: ', error);
 			}
 			
-		}
+		},
+		async addComponent(componentName)
+		{
+			console.log("Adding component!!!")
+			try {
+				const result = await axios.post('http://localhost:8000/api/edit', {
+					edit_type: "add_component",
+					component_name: componentName,
+					file: this.resultData,
+				});
+				console.log(result)
+				this.resultData = result.data;
+				this.file = result.data;
+				xml2js.parseString(result.data, (err, result) => {
+					if (err) {
+						throw err;
+					}
+					this.jsData = result;
+					const str = JSON.stringify(result, null, 2);
+					console.log('js -> %s', str);
+				});
+			} catch (error) {
+				console.error('An error occurred:', error);
+				this.errorData = error.response.data
+				this.jsData = null
+			}
+		},
+		async addVariable(componentName, variableName)
+		{
+			console.log("Adding variable!!!")
+			try {
+				const result = await axios.post('http://localhost:8000/api/edit', {
+					edit_type: "add_variable",
+					component_name: componentName,
+					variable_name: variableName,
+					file: this.resultData,
+				});
+				console.log(result)
+				this.resultData = result.data;
+				this.file = result.data;
+				xml2js.parseString(result.data, (err, result) => {
+					if (err) {
+						throw err;
+					}
+					this.jsData = result;
+					const str = JSON.stringify(result, null, 2);
+					console.log('js -> %s', str);
+				});
+			} catch (error) {
+				console.error('An error occurred:', error);
+				this.errorData = error.response.data
+				this.jsData = null
+			}
+		},
 	},
 	components: {
 		TreeContainer,
@@ -256,6 +311,12 @@ export default {
 .upload-section {
 	width: 750px;
 	padding: 20px;
+}
+
+.edit_button {
+  padding: 5px; /* Adjust padding to make button smaller */
+  font-size: 12px; /* Adjust font size */
+  border-radius: 3px; /* Adjust border radius */
 }
 
 .group-wrapper {

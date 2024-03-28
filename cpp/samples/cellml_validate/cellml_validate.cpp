@@ -3,8 +3,8 @@
 #include <sstream>
 #include <filesystem>
 #include <algorithm>
-#include <string> // required for std::string
-#include <sys/types.h> // required for stat.h
+#include <string>
+#include <sys/types.h>
 #include <sys/stat.h> 
 
 #include "libcellml/analyser.h"
@@ -21,7 +21,6 @@
 #include "libcellml/types.h"
 #include "mongoose.h"
 
-// Forward declare helper functions
 void printModel(libcellml::ModelPtr &model);
 void printModel(libcellml::ModelPtr &model, bool includeMaths);
 void printIssues(const libcellml::LoggerPtr &item);
@@ -37,7 +36,10 @@ bool makeDirectory(const std::string &sPath);
 std::string create_issue_list(libcellml::ValidatorPtr &validator);
 std::string create_visualised_string(libcellml::ModelPtr &model);
 
-static const char *s_http_addr = "http://localhost:8000";  // HTTP port
+// LOCAL HOST
+static const char *s_http_addr = "http://localhost:8000";
+
+// WHERE UPLOADED DEPENDENCIES GO
 static std::string directory_name = "resources";
 
 namespace fs = std::filesystem;
@@ -45,101 +47,100 @@ namespace fs = std::filesystem;
 // Local copy of model
 auto local_model = libcellml::Model::create();
 
-// Dynamic RESTful server
-static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
-  if (ev == MG_EV_HTTP_MSG) {
-    struct mg_http_message *hm = (struct mg_http_message *) ev_data;
-    if (mg_strcmp(hm->method, mg_str("OPTIONS")) == 0) {
-        mg_http_reply(c, 200, "Content-Type: application/json\r\n" 
-                            "Access-Control-Allow-Headers: content-type\r\n"
-                            "Access-Control-Request-Method: OPTIONS, POST\r\n"
-                            "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                            "{\"OPTIONS Request\": %d}", 0);
-    }
-    else if (mg_http_match_uri(hm, "/api/validate")) {
-     
-      // Attempt to fetch a JSON string from the body, hm->body
-      struct mg_str file = hm->body;
-      std::string file_str = mg_json_get_str(file, "$.file");
-      std::cout << "Extracted string is...\n" << file_str << std::endl;
-      
-      // Create model
-      auto parser = libcellml::Parser::create();
-      auto model = parser->parseModel(file_str);
-
-      // Create validator
-      auto validator = libcellml::Validator::create();
-      validator->validateModel(model);
-
-      // Retrieve number of issues from validator
-      size_t numIssues = validator->issueCount();
-      std::string issueList = create_issue_list(validator);
-
-      // Print model to terminal, include the MathML
-      printModel(model, true);
-
-	  // http reply
-      mg_http_reply(c, 200, "Content-Type: application/json\r\n"
-                        "Access-Control-Allow-Headers: content-type\r\n"
-                        "Access-Control-Request-Method: POST\r\n"
-                        "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                        "{\"Number of issues\": %d, \"Issue List\": %s}", numIssues, issueList.c_str());
-    } else if (mg_http_match_uri(hm, "/api/uploadDependencies")) {
-
-        if (!fs::exists(directory_name)) {
-            if (fs::create_directory(directory_name)) {
-                std::cout << "Directory created: " << directory_name;
-            } else {
-                std::cerr << "Failed to create directory: " << directory_name;
-            }
-        }
-        struct mg_str body = hm->body;
-        struct mg_http_part part;
-        size_t pos = 0;
-
-        while ((pos = mg_http_next_multipart(body, pos, &part)) != 0) {
-            MG_INFO(("Chunk name: [%.*s] filename: [%.*s] length: %lu bytes",
-                    part.name.len, part.name.ptr,
-                    part.filename.len, part.filename.ptr, part.body.len));
-            std::cout << part.body.ptr << std::endl;
-            // Use this chunk ....
-            std::string filename = directory_name + '/' + std::string(part.filename.ptr, part.filename.len);
-            
-            std::cout << "filename is: " << filename << std::endl;
-            std::ofstream file(filename);
-            if (!file.is_open()) {
-                std::cerr<< "Failed to create file: " << filename << std::endl;
-            } else {
-                std::cout << "Opened file!" << std::endl;
-            }
-
-            std::string data = std::string(part.body.ptr, part.body.len);
-            std::cout << "Data is: " << data << std::endl;
-            file << data;
-            file.close();
+static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) 
+{
+    if (ev == MG_EV_HTTP_MSG) 
+    {
+        struct mg_http_message *hm = (struct mg_http_message *) ev_data;
+        if (mg_strcmp(hm->method, mg_str("OPTIONS")) == 0) 
+        {
+            mg_http_reply(c, 200, "Content-Type: application/json\r\n" 
+                                "Access-Control-Allow-Headers: content-type\r\n"
+                                "Access-Control-Request-Method: OPTIONS, POST\r\n"
+                                "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                                "{\"OPTIONS Request\": %d}", 0);
         }
 
-        mg_http_reply(c, 200, "Content-Type: application/json\r\n"
-                              "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-							  "{\"Uploaded Dependencies!\": %d}", 200);
-        
-    } else if (mg_http_match_uri(hm, "/api/visualise")) {
-     
-        // Attempt to fetch a JSON string from the body, hm->body
-        struct mg_str file = hm->body;
-        char *file_str = mg_json_get_str(file, "$.file");
-        std::cout << "Extracted string is...\n" << file_str << std::endl;
+        else if (mg_http_match_uri(hm, "/api/validate")) 
+        {
+        // Fetch JSON file from body
+        std::string file_str = mg_json_get_str(hm->body, "$.file");
         
         // Create model
         auto parser = libcellml::Parser::create();
         auto model = parser->parseModel(file_str);
+
+        // Create validator
+        auto validator = libcellml::Validator::create();
+        validator->validateModel(model);
+
+        // Retrieve number of issues from validator
+        size_t numIssues = validator->issueCount();
+        std::string issueList = create_issue_list(validator);
+
+        // Print model to terminal, include the MathML
+        printModel(model, true);
+
+        // http reply
+        mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                            "Access-Control-Allow-Headers: content-type\r\n"
+                            "Access-Control-Request-Method: POST\r\n"
+                            "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                            "{\"Number of issues\": %d, \"Issue List\": %s}", numIssues, issueList.c_str());
+        } 
+
+        // Upload dependencies to resources/
+        else if (mg_http_match_uri(hm, "/api/uploadDependencies")) 
+        {
+            if (!fs::exists(directory_name)) {
+                if (fs::create_directory(directory_name)) {
+                    std::cout << "Directory created: " << directory_name;
+                } else {
+                    std::cerr << "Failed to create directory: " << directory_name;
+                }
+            }
+            // Process multipart files upload
+            struct mg_str body = hm->body;
+            struct mg_http_part part;
+            size_t pos = 0;
+
+            while ((pos = mg_http_next_multipart(body, pos, &part)) != 0) 
+            {
+                MG_INFO(("Chunk name: [%.*s] filename: [%.*s] length: %lu bytes",
+                        part.name.len, part.name.ptr,
+                        part.filename.len, part.filename.ptr, part.body.len));
+
+                // Use this chunk ....
+                std::string filename = directory_name + '/' + std::string(part.filename.ptr, part.filename.len);
+                std::ofstream file(filename);
+                if (!file.is_open()) {
+                    std::cerr<< "Failed to create file: " << filename << std::endl;
+                } else {
+                    std::cout << "Opened file!" << std::endl;
+                }
+                std::string data = std::string(part.body.ptr, part.body.len);
+                file << data;
+                file.close();
+            }
+
+        mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                              "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+							  "{\"Uploaded Dependencies!\": %d}", 200);
+    } 
+    
+    else if (mg_http_match_uri(hm, "/api/visualise")) 
+    {
+        char *file_str = mg_json_get_str(hm->body, "$.file");
+        auto parser = libcellml::Parser::create();
+        auto model = parser->parseModel(file_str);
+
         if (parser->issueCount() != 0) {
             std::cout << "ERROR PARSING" << std::endl;
             mg_http_reply(c, 400, "Content-Type: application/json\r\n"
-                                "Access-Control-Allow-Headers: content-type\r\n"
-                                "Access-Control-Request-Method: POST\r\n"
-                                "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                                "Error parsing file");
+                        "Access-Control-Allow-Headers: content-type\r\n"
+                        "Access-Control-Request-Method: POST\r\n"
+                        "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                        "Error parsing file");
             return;
         }
 
@@ -212,6 +213,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           mg_http_printf_chunk(c, "");  // Don't forget the last empty chunk
 
     } else if (mg_http_match_uri(hm, "/api/edit")) {
+        std::cout <<"HERE~!!!!\n";
 
           // Extract model data and editing info
           //    Edit options:
@@ -225,12 +227,12 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           struct mg_str file = hm->body;
           std::string edit_type = mg_json_get_str(file, "$.edit_type");
           std::string file_str = mg_json_get_str(file, "$.file");
-          std::string model_name = mg_json_get_str(file, "$.model_name");
-          std::string model_id = mg_json_get_str(file, "$.model_id");
+          //std::string model_name = mg_json_get_str(file, "$.model_name");
+          //std::string model_id = mg_json_get_str(file, "$.model_id");
           std::cout << "Extracted edit is... " << edit_type << std::endl;
           std::cout << "Extracted file is... " << file_str << std::endl;
-          std::cout << "Extracted model name is... " << model_name << std::endl;
-          std::cout << "Extracted model id is... " << model_id << std::endl;
+          //std::cout << "Extracted model name is... " << model_name << std::endl;
+          //std::cout << "Extracted model id is... " << model_id << std::endl;
 
           // ADD UNITS
           if (edit_type.compare("add_units") == 0) {
@@ -244,10 +246,21 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           } 
           // ADD PARENT COMPONENT 
           else if (edit_type.compare("add_component") == 0) {
-              std::string component_name = mg_json_get_str(file, "$.component_name");
-              std::cout << "Extracted component name is... " << component_name << std::endl;
-              auto new_component = libcellml::Component::create(component_name);
-              local_model->addComponent(new_component);
+                std::string component_name = mg_json_get_str(file, "$.component_name");
+                std::cout << "Extracted component name is... " << component_name << std::endl;
+                auto new_component = libcellml::Component::create(component_name);
+                local_model->addComponent(new_component);
+                std::cout << "in edit, printing local model...\n";
+                printModel(local_model, true);
+                auto printer = libcellml::Printer::create();
+                std::string text = printer->printModel(local_model);
+
+                // http reply
+                mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                                "Access-Control-Allow-Headers: content-type\r\n"
+                                "Access-Control-Request-Method: POST\r\n"
+                                "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                                "%s", text.c_str());
           } 
           // ADD CHILD COMPONENT 
           else if (edit_type.compare("add_child_component") == 0) {
@@ -264,13 +277,24 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data) {
           } 
           // ADD VARIABLE 
           else if (edit_type.compare("add_variable") == 0) {
-              std::string component_name = mg_json_get_str(file, "$.component_name");
-              std::cout << "component name: " << component_name << std::endl;
-              std::string variable_name = mg_json_get_str(file, "$.variable_name");
-              std::cout << "variable name: " << variable_name << std::endl;
-              auto new_variable = libcellml::Variable::create(variable_name);
-              auto component = local_model->component(component_name);
-              component->addVariable(new_variable);
+            std::string component_name = mg_json_get_str(file, "$.component_name");
+            std::cout << "Extracted component name is... " << component_name << std::endl;
+            std::string variable_name = mg_json_get_str(file, "$.variable_name");
+            std::cout << "variable name: " << variable_name << std::endl;
+            auto new_variable = libcellml::Variable::create(variable_name);
+            auto component = local_model->component(component_name);
+            component->addVariable(new_variable);
+            std::cout << "in edit, printing local model...\n";
+            printModel(local_model, true);
+            auto printer = libcellml::Printer::create();
+            std::string text = printer->printModel(local_model);
+
+            // http reply
+            mg_http_reply(c, 200, "Content-Type: application/json\r\n"
+                            "Access-Control-Allow-Headers: content-type\r\n"
+                            "Access-Control-Request-Method: POST\r\n"
+                            "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
+                            "%s", text.c_str());
           } else {
               std::cout << "UNKNOWN\n";
               // Unknown command

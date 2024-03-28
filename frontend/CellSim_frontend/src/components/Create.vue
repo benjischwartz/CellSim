@@ -256,13 +256,6 @@ export default {
   border-radius: 25px;
 }
 
-.container > div {
-  font-size: 1vw;
-  padding: .5em;
-  background: silver;
-  flex-shrink: 1;
-  border: 1px solid black;
-  border-radius: 25px;
-}
+
 
 </style>

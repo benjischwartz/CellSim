@@ -3,6 +3,13 @@
 	<button class="collapse-all-button" @click="toggleContainerCollapse">
       {{ isContainerCollapsed ? 'Expand All' : 'Collapse All' }}
     </button>
+	<button class="add-component-button" @click="showComponentPopup = true">
+		Add component
+    </button>
+		<div v-if="showComponentPopup" class="popup"> Add Component
+			<input type="text" v-model="componentName" placeholder="Enter component name">
+			<button @click="addComponent(componentName)">Done</button>
+		</div>
 	<div class="{ 'component': true, 'collapsed': isCollapsed }" v-for="component in components">
 		<div class="name">{{ component.$.name }} </div>
 		<button 
@@ -19,6 +26,15 @@
 				/>
 			</div>
 		</div>
+		<button class="add-variable-button" 
+			@click="showVariablePopup = true;
+					componentName=component.$.name"> 
+			Add Variable
+		</button>
+	</div>
+	<div v-if="showVariablePopup" class="popup"> Add Variable
+		<input type="text" v-model="variableName" placeholder="Enter variable name">
+		<button @click="addVariable(componentName, variableName)">Done</button>
 	</div>
 </div>
 </template>
@@ -33,7 +49,11 @@ export default {
 	data() {
 		return {            
 			isCollapsed: {},
-			isContainerCollapsed: false 
+			isContainerCollapsed: false,
+			showComponentPopup: false,
+			showVariablePopup: false,
+			componentName: '',
+			variableName: '',
 		} 
 	},
 	computed: {
@@ -102,8 +122,22 @@ export default {
 			// Update collapse state for all child components accordingly
 			for (const component of this.components) {
 				this.isCollapsed[component.$.name] = this.isContainerCollapsed;
+			}
+		},
+		addComponent(componentName) {
+			console.log('Component name:', this.componentName);
+			this.showComponentPopup = false;
+			this.componentName = '';
+			this.$emit("add-component", componentName);
+		},
+		addVariable(componentName, variableName) {
+			console.log('Component name:', this.componentName);
+			console.log('Variable name:', this.variableName);
+			this.showVariablePopup = false;
+			this.componentName = '';
+			this.variableName = '';
+			this.$emit("add-variable", componentName, variableName);
 		}
-    },
 	},
 	components: {
 		Variable,
@@ -124,6 +158,26 @@ export default {
 	width: 800px
 }
 
+.container > div {
+  font-size: 1vw;
+  padding: .5em;
+  background: silver;
+  flex-shrink: 1;
+  border: 1px solid black;
+  border-radius: 25px;
+}
+
+.container > .popup {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: whitesmoke;
+  padding: 100px;
+  border: 1px solid black;
+  border-radius: 50px; 
+}
+
 .component {
 	position: relative;
 	flex: 1;
@@ -139,15 +193,31 @@ export default {
 .collapse-button {
 	top: 10px;
 	right: 10px;
-	padding: 5px; /* Adjust padding to make button smaller */
-	font-size: 12px; /* Adjust font size */
-	border-radius: 3px; /* Adjust border radius */
+	padding: 5px; 
+	font-size: 12px; 
+	border-radius: 3px; 
 }
 
 .collapse-all-button {
-  position: absolute; /* Position button relative to the container */
-  top: 5px; /* Adjust top position */
-  right: 5px; /* Adjust right position */
+  position: absolute; 
+  top: 5px; 
+  right: 5px; 
+  padding: 5px; 
+  font-size: 12px; 
+  border-radius: 3px; 
+}
+
+.add-component-button {
+  position: absolute; 
+  top: 5px; 
+  left: 5px; /* Adjust right position */
+  padding: 5px; /* Adjust padding to make button smaller */
+  font-size: 12px; /* Adjust font size */
+  border-radius: 3px; /* Adjust border radius */
+}
+
+.add-variable-button {
+  position: relative; /* Position button relative to the container */
   padding: 5px; /* Adjust padding to make button smaller */
   font-size: 12px; /* Adjust font size */
   border-radius: 3px; /* Adjust border radius */
