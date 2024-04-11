@@ -31,10 +31,20 @@
 					componentName=component.$.name"> 
 			Add Variable
 		</button>
+		<button class="add-nested-component-button" 
+			@click="showNestedComponentPopup = true;
+			parentComponent=component.$.name">
+			Add Component
+		</button>
+
 	</div>
 	<div v-if="showVariablePopup" class="popup"> Add Variable
 		<input type="text" v-model="variableName" placeholder="Enter variable name">
 		<button @click="addVariable(componentName, variableName)">Done</button>
+	</div>
+	<div v-if="showNestedComponentPopup" class="popup"> Add Component
+		<input type="text" v-model="componentName" placeholder="Enter component name">
+		<button @click="addNestedComponent(componentName, parentComponent)">Done</button>
 	</div>
 </div>
 </template>
@@ -51,8 +61,10 @@ export default {
 			isCollapsed: {},
 			isContainerCollapsed: false,
 			showComponentPopup: false,
+			showNestedComponentPopup: false,
 			showVariablePopup: false,
 			componentName: '',
+			parentComponent: '',
 			variableName: '',
 		} 
 	},
@@ -129,6 +141,14 @@ export default {
 			this.showComponentPopup = false;
 			this.componentName = '';
 			this.$emit("add-component", componentName);
+		},
+		addNestedComponent(componentName, parentComponent) {
+			console.log('Component name:', this.componentName);
+			console.log('Parent name:', parentComponent);
+			this.showNestedComponentPopup = false;
+			this.componentName = '';
+			this.parentComponent = '';
+			this.$emit("add-nested-component", componentName, parentComponent);
 		},
 		addVariable(componentName, variableName) {
 			console.log('Component name:', this.componentName);
@@ -210,17 +230,24 @@ export default {
 .add-component-button {
   position: absolute; 
   top: 5px; 
-  left: 5px; /* Adjust right position */
-  padding: 5px; /* Adjust padding to make button smaller */
-  font-size: 12px; /* Adjust font size */
-  border-radius: 3px; /* Adjust border radius */
+  left: 5px; 
+  padding: 5px;
+  font-size: 12px; 
+  border-radius: 3px; 
 }
 
 .add-variable-button {
-  position: relative; /* Position button relative to the container */
-  padding: 5px; /* Adjust padding to make button smaller */
-  font-size: 12px; /* Adjust font size */
-  border-radius: 3px; /* Adjust border radius */
+  position: relative; 
+  padding: 5px; 
+  font-size: 12px; 
+  border-radius: 3px; 
+}
+
+.add-nested-component-button {
+  position: relative; 
+  padding: 5px; 
+  font-size: 12px; 
+  border-radius: 3px; 
 }
 
 .collapsed {

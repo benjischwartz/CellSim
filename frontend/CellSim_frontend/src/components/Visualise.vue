@@ -61,6 +61,7 @@
 		:propData=jsData 
 		@variable-click="showVariableInfo"
 		@add-component="addComponent"
+		@add-nested-component="addNestedComponent"
 		@add-variable="addVariable"
 	/>
 </div>
@@ -157,6 +158,7 @@ export default {
 				console.log(result)
 				console.log('flattened model %s', result.data);
 				this.resultData = result.data;
+				this.file = result.data;
 				xml2js.parseString(result.data, (err, result) => {
 					if (err) {
 						throw err;
@@ -249,6 +251,33 @@ export default {
 				const result = await axios.post('http://localhost:8000/api/edit', {
 					edit_type: "add_component",
 					component_name: componentName,
+					file: this.resultData,
+				});
+				console.log(result)
+				this.resultData = result.data;
+				this.file = result.data;
+				xml2js.parseString(result.data, (err, result) => {
+					if (err) {
+						throw err;
+					}
+					this.jsData = result;
+					const str = JSON.stringify(result, null, 2);
+					console.log('js -> %s', str);
+				});
+			} catch (error) {
+				console.error('An error occurred:', error);
+				this.errorData = error.response.data
+				this.jsData = null
+			}
+		},
+		async addNestedComponent(componentName, parentComponent)
+		{
+			console.log("Adding component!!!")
+			try {
+				const result = await axios.post('http://localhost:8000/api/edit', {
+					edit_type: "add_child_component",
+					parent_component_name: parentComponent,
+					child_component_name: componentName,
 					file: this.resultData,
 				});
 				console.log(result)

@@ -6,7 +6,7 @@
 	<hr>
 	<div><b>Variable Mappings:</b> 
 		<div v-for="mapping in propVariableMappings">
-			{{ propComponentName }} === {{ mapping.component }}
+			{{ propComponentName }} → {{ mapping.component }}
 		</div>
 	</div>
 	<hr>
