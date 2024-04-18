@@ -20,6 +20,7 @@
 #include "libcellml/component.h"
 #include "libcellml/types.h"
 #include "mongoose.h"
+// #include "libxslt.h"
 
 void printModel(libcellml::ModelPtr &model);
 void printModel(libcellml::ModelPtr &model, bool includeMaths);
@@ -40,7 +41,7 @@ std::string create_visualised_string(libcellml::ModelPtr &model);
 static const char *s_http_addr = "http://localhost:8000";
 
 // WHERE UPLOADED DEPENDENCIES GO
-static std::string directory_name = "resources";
+static const std::string directory_name = "resources";
 
 namespace fs = std::filesystem;
 
@@ -326,6 +327,16 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
           std::cout << "Extracted component name is... " << component_name << std::endl;
           libcellml::ComponentPtr component = local_model->component(component_name);
           std::string equation = component->math();
+
+          // Load XSLT stylesheet
+        //   xsltStylesheetPtr stylesheet = xsltParseStylesheetFile(("mathmlc2p.xsl"));
+        //   if (!stylesheet) {
+        //     std::cerr << "Error; failed to load XSLT stylesheet" << std::endl;
+        //     return 1;
+        //   }
+        
+        
+
           std::cout << "Sending equation: " << equation.c_str() << std::endl;
           mg_http_reply(c, 200, "Content-Type: application/json\r\n"
                             "Access-Control-Allow-Headers: content-type\r\n"
