@@ -248,15 +248,20 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
                 local_model->addComponent(new_component);
                 std::cout << "in edit, printing local model...\n";
                 printModel(local_model, true);
-                auto printer = libcellml::Printer::create();
-                std::string text = printer->printModel(local_model);
 
-                // http reply
-                mg_http_reply(c, 200, "Content-Type: application/json\r\n"
-                                "Access-Control-Allow-Headers: content-type\r\n"
-                                "Access-Control-Request-Method: POST\r\n"
-                                "Access-Control-Allow-Origin: http://localhost:5173\r\n", 
-                                "%s", text.c_str());
+                auto printer = libcellml::Printer::create();
+                result = printer->printModel(local_model);
+                std::string visualised_str = create_visualised_string(local_model);
+
+                mg_printf(c, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
+                            "Transfer-Encoding: chunked\r\n"
+                            "Access-Control-Allow-Headers: content-type\r\n"
+                            "Access-Control-Request-Method: POST\r\n"
+                            "Access-Control-Allow-Origin: http://localhost:5173\r\n\r\n");
+                mg_http_printf_chunk(c, "%s", result.c_str());
+                mg_http_printf_chunk(c, "%s", "*separator*");
+                mg_http_printf_chunk(c, "%s", visualised_str.c_str());
+                mg_http_printf_chunk(c, "");
           } 
           // ADD CHILD COMPONENT 
           else if (edit_type.compare("add_child_component") == 0) {

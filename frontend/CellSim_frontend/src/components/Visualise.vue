@@ -3,7 +3,7 @@
 	<h1>Visualize CellML File</h1>
 	<input type="file" @change="handleFileUpload" accept=".xml" />
 	<br /><br />
-	<textarea name="file" v-model="file" placeholder="Paste File Data Here" class="upload-section"></textarea> 
+	<textarea name="file" v-model="file" placeholder="Top-level file: paste or upload here" class="upload-section"></textarea> 
 	<br /><br />
 	<button @click="sendData()">Visualize</button> <br /><br />
 </div>
