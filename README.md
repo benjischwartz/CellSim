@@ -22,6 +22,10 @@ The frontend would provide a graphical interface for working with libcellml mode
 
 ![diagram](images/diagram.png)
 
+29/5/2024
+Updated wireframe of create window
+![create_wireframe](images/create_wireframe.png)
+
 ## Project Considerations
 
 
