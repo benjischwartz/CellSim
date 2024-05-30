@@ -7,7 +7,7 @@
 		Add component
     </button>
 		<div v-if="showComponentPopup" class="popup"> Add Component
-			<input type="text" v-model="componentName" placeholder="Enter component name">
+			<input type="text" v-model="componentName" placeholder="Enter component name" @keydown.enter="addComponent(componentName)">
 			<button @click="addComponent(componentName)">Done</button>
 		</div>
 	<div class="{ 'component': true, 'collapsed': isCollapsed }" v-for="component in components">
@@ -26,24 +26,32 @@
 				/>
 			</div>
 		</div>
-		<button class="add-variable-button" 
-			@click="showVariablePopup = true;
-					componentName=component.$.name"> 
-			Add Variable
-		</button>
-		<button class="add-nested-component-button" 
-			@click="showNestedComponentPopup = true;
-			parentComponent=component.$.name">
-			Add Component
-		</button>
+		<!-- Testing menu -->
+		<div class="menu-container">
+			<button @click="toggleMenu(component.$.name)" class="menu-button">. . .</button>
+			<div v-if="showMenu[component.$.name]" class="dropdown-menu">
+				<button
+					@click="showNestedComponentPopup = true;
+					parentComponent=component.$.name">
+					Add Component
+				</button>
+				<button 
+					@click="showVariablePopup = true;
+					componentName=component.$.name">
+					Add Variable
+				</button>
+				<button @click="action3">Set Name</button>
+				<button @click="action4">Set Math</button>
+			</div>
+		</div>
 
 	</div>
 	<div v-if="showVariablePopup" class="popup"> Add Variable
-		<input type="text" v-model="variableName" placeholder="Enter variable name">
+		<input type="text" v-model="variableName" placeholder="Enter variable name" @keydown.enter="addVariable(componentName, variableName)">
 		<button @click="addVariable(componentName, variableName)">Done</button>
 	</div>
 	<div v-if="showNestedComponentPopup" class="popup"> Add Component
-		<input type="text" v-model="componentName" placeholder="Enter component name">
+		<input type="text" v-model="componentName" placeholder="Enter component name" @keydown.enter="addNestedComponent(componentName, parentComponent)">
 		<button @click="addNestedComponent(componentName, parentComponent)">Done</button>
 	</div>
 </div>
@@ -66,6 +74,7 @@ export default {
 			componentName: '',
 			parentComponent: '',
 			variableName: '',
+			showMenu: {},
 		} 
 	},
 	computed: {
@@ -80,11 +89,21 @@ export default {
 		components: {
 			handler(newVal) {
 				this.initializeIsCollapsed();
+				this.initializeToggleMenu();
 			},
 			immediate: true,
 		},
 	},
 	methods: {
+		initializeToggleMenu() {
+			this.showMenu = {};
+			for (const component of this.components) {
+				this.showMenu[component.$.name] = false;
+			}
+		},
+		toggleMenu(componentName) {
+			this.showMenu[componentName] = !this.showMenu[componentName];
+		},
 		getMappingsForVariable(variableName, componentName) {
 			let mappings = [];
 			if (this.connections) {
@@ -216,6 +235,7 @@ export default {
 	padding: 5px; 
 	font-size: 12px; 
 	border-radius: 3px; 
+	cursor: pointer;
 }
 
 .collapse-all-button {
@@ -253,5 +273,39 @@ export default {
 .collapsed {
 	height: fit-content;
 }
+.menu-container {
+  position: relative;
+  display: inline-block;
+}
 
+.menu-button {
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  top: 5px; 
+  right: 5px; 
+  padding: 5px; 
+  font-size: 12px; 
+  border-radius: 3px; 
+}
+
+.dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.dropdown-menu button {
+  bottom: 5px; 
+  left: 5px; 
+  padding: 5px;
+  font-size: 12px; 
+  border-radius: 3px
+}
 </style>

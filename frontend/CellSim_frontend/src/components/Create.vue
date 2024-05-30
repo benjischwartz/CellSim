@@ -15,6 +15,9 @@
     <h2>Component View</h2>
     <ComponentView 
       :propData=jsData
+      @add-component="addComponent"
+      @add-nested-component="addNestedComponent"
+      @add-variable="addVariable"
     /> </div>
     <button>Add Metadata</button> <br />
     <button @click="showUnitsInput=true">Add Units</button> <br />
@@ -134,6 +137,33 @@ export default {
       this.showComponentInput = false;
     },
   },
+  async addNestedComponent(componentName, parentComponent)
+		{
+			console.log("Adding component!!!")
+			try {
+				const result = await axios.post('http://localhost:8000/api/edit', {
+					edit_type: "add_child_component",
+					parent_component_name: parentComponent,
+					child_component_name: componentName,
+					file: this.resultData,
+				});
+				console.log(result)
+				this.resultData = result.data;
+				this.file = result.data;
+				xml2js.parseString(result.data, (err, result) => {
+					if (err) {
+						throw err;
+					}
+					this.jsData = result;
+					const str = JSON.stringify(result, null, 2);
+					console.log('js -> %s', str);
+				});
+			} catch (error) {
+				console.error('An error occurred:', error);
+				this.errorData = error.response.data
+				this.jsData = null
+			}
+		},
 
   components: {
     ComponentView,
