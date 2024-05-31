@@ -64,7 +64,7 @@
     <button @click="showComponentInput=true">Add Component</button> <br />
     <div v-if="showComponentInput">
       <input type="text" name="component_name" v-model="component_name" placeholder="Component Name" />
-      <button @click="addComponent()">Add</button><br /><br />
+      <button @click="addComponent(component_name)">Add</button><br /><br />
     </div>
     <button>Set Model Name </button> <br />
     <button @click="exportXML()">Export </button> <br />
@@ -163,11 +163,12 @@ export default {
       });
       this.showUnitsInput = false;
     },
-    async addComponent()
+    async addComponent(componentName)
     {
+      console.log("Adding component: ", componentName);
       let result = await axios.post("http://localhost:8000/api/edit", {
         edit_type: "add_component",
-        component_name: this.component_name,
+        component_name: componentName,
         file: this.xmlData,
         model_name: this.model_name,
         model_id: this.model_id,

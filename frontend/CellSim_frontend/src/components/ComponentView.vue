@@ -32,12 +32,14 @@
 			<div v-if="showMenu[component.$.name]" class="dropdown-menu">
 				<button
 					@click="showNestedComponentPopup = true;
-					parentComponent=component.$.name">
+					parentComponent=component.$.name
+					showMenu[component.$.name]=false">
 					Add Component
 				</button>
 				<button 
 					@click="showVariablePopup = true;
-					componentName=component.$.name">
+					componentName=component.$.name
+					showMenu[component.$.name]=false">
 					Add Variable
 				</button>
 				<button @click="action3">Set Name</button>
