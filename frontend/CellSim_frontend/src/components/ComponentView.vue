@@ -43,7 +43,12 @@
 					Add Variable
 				</button>
 				<button @click="action3">Set Name</button>
-				<button @click="action4">Set Math</button>
+				<button 
+					@click="showEquationPopup = true;
+					componentName=component.$.name
+					showMenu[component.$.name]=false">
+					Set Equation
+				</button>
 			</div>
 		</div>
 
@@ -55,6 +60,10 @@
 	<div v-if="showNestedComponentPopup" class="popup"> Add Component
 		<input type="text" v-model="componentName" placeholder="Enter component name" @keydown.enter="addNestedComponent(componentName, parentComponent)">
 		<button @click="addNestedComponent(componentName, parentComponent)">Done</button>
+	</div>
+	<div v-if="showEquationPopup" class="popup"> Add Equation
+		<input type="text" v-model="equation" placeholder="Enter equation" @keydown.enter="addEquation(componentName, equation)">
+		<button @click="addEquation(componentName, equation)">Done</button>
 	</div>
 </div>
 </template>
@@ -73,9 +82,11 @@ export default {
 			showComponentPopup: false,
 			showNestedComponentPopup: false,
 			showVariablePopup: false,
+			showEquationPopup: false,
 			componentName: '',
 			parentComponent: '',
 			variableName: '',
+			equation: '',
 			showMenu: {},
 		} 
 	},
@@ -164,20 +175,22 @@ export default {
 			this.$emit("add-component", componentName);
 		},
 		addNestedComponent(componentName, parentComponent) {
-			console.log('Component name:', this.componentName);
-			console.log('Parent name:', parentComponent);
 			this.showNestedComponentPopup = false;
 			this.componentName = '';
 			this.parentComponent = '';
 			this.$emit("add-nested-component", componentName, parentComponent);
 		},
 		addVariable(componentName, variableName) {
-			console.log('Component name:', this.componentName);
-			console.log('Variable name:', this.variableName);
 			this.showVariablePopup = false;
 			this.componentName = '';
 			this.variableName = '';
 			this.$emit("add-variable", componentName, variableName);
+		},
+		addEquation(componentName, equation) {
+			this.showEquationPopup = false;
+			this.componentName = '';
+			this.equation = '';
+			this.$emit("add-equation", componentName, equation);
 		}
 	},
 	components: {

@@ -19,6 +19,7 @@
       @add-component="addComponent"
       @add-nested-component="addNestedComponent"
       @add-variable="addVariable"
+      @add-equation="addEquation"
     /> </div>
 
     <div v-if="this.jsData && encapsulation">
@@ -235,7 +236,29 @@ export default {
         const str = JSON.stringify(result, null, 2);
         console.log('js -> %s', str);
       });
-      console.log("Adding variable!!!")
+    },
+    async addEquation(componentName, equation)
+    {
+      let result = await axios.post('http://localhost:8000/api/edit', {
+        edit_type: "add_equation",
+        component_name: componentName,
+        equation: equation,
+        file: this.xmlData,
+      })
+      
+      // Separate the response data into XML and formatted data
+      const responseText = result.data;
+      console.log(responseText);
+      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
+      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      xml2js.parseString(this.xmlData, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.jsData = result;
+        const str = JSON.stringify(result, null, 2);
+        console.log('js -> %s', str);
+      });
     },
     getComponentsInGroup(group) {
       let components = [];
