@@ -59,8 +59,22 @@
     <button>Add Metadata</button> <br />
     <button @click="showUnitsInput=true">Add Units</button> <br />
     <div v-if="showUnitsInput">
-      <input type="text" name="units_name" v-model="units_name" placeholder="Units Name" />
-      <button @click="addUnits()">Add</button><br /><br />
+      <input type="text" name="units_name" v-model="units_name" placeholder="Units Name" /> <br />
+      <select v-model="prefix_enum">
+        <option disabled value="">Select a prefix</option>
+        <option v-for="(item, index) in prefix_enums" :key="index" :value="index">
+          {{ item }}
+        </option>
+      </select>
+      <br />
+      <select v-model="si_enum">
+        <option disabled value="">Select a unit</option>
+        <option v-for="(item, index) in si_enums" :key="index" :value="index">
+          {{ item }}
+        </option>
+      </select>
+      <br />
+      <button @click="addUnits(units_name, prefix_enum, si_enum)">Add</button><br /><br />
     </div>
     <button @click="showComponentInput=true">Add Component</button> <br />
     <div v-if="showComponentInput">
@@ -70,6 +84,8 @@
     <button>Set Model Name </button> <br />
     <button @click="exportXML()">Export </button> <br />
   </div>
+  <br /><br />
+  <div v-if="issueList"> <h2> Issue List: </h2> <br /> {{ issueList }}</div>
 
 
 </template>
@@ -90,17 +106,75 @@ export default {
       model_name: "",
       model_id: "",
       units_name: "",
+      prefix_enum: "",
+      si_enum: "",
       component_name: "",
       edit_type: "",
       visualise: false,
       formattedData: "", // data property to store the formatted result
       xmlData: "", // data property to store xml result
+      issueList: "", // data property to store validator result 
       jsData: "",
       components: [],
       items: [],
       groups: [],
       showComponentInput: false,
       showUnitsInput: false,
+      prefix_enums: [
+        'YOTTA',
+        'ZETTA',
+        'EXA',
+        'PETA',
+        'TERA',
+        'GIGA',
+        'MEGA',
+        'KILO',
+        'HECTO',
+        'DECA',
+        'DECI',
+        'CENTI',
+        'MILLI',
+        'MICRO',
+        'NANO',
+        'PICO',
+        'FEMTO',
+        'ATTO',
+        'ZEPTO',
+        'YOCTO'
+      ],
+      si_enums: [
+        'AMPERE',
+        'BECQUEREL',
+        'CANDELA',
+        'COULOMB',
+        'DIMENSIONLESS',
+        'FARAD',
+        'GRAM',
+        'GRAY',
+        'HENRY',
+        'HERTZ',
+        'JOULE',
+        'KATAL',
+        'KELVIN',
+        'KILOGRAM',
+        'LITRE',
+        'LUMEN',
+        'LUX',
+        'METRE',
+        'MOLE',
+        'NEWTON',
+        'OHM',
+        'PASCAL',
+        'RADIAN',
+        'SECOND',
+        'SIEMENS',
+        'SIEVERT',
+        'STERADIAN',
+        'TESLA',
+        'VOLT',
+        'WATT',
+        'WEBER'
+      ],
     };
   },
   computed: {
@@ -128,10 +202,17 @@ export default {
       })
       console.log("sending model");
 
-      // Separate the response data into XML and formatted data
+      // Separate the response data into XML, formatted data, and issue list
+      const separator = '*separator*';
       const responseText = result.data;
-      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
-      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      } else {
+        console.error('Unexpected response format');
+      }
       xml2js.parseString(this.xmlData, (err, result) => {
         if (err) {
           throw err;
@@ -141,19 +222,34 @@ export default {
         console.log('js -> %s', str);
       });
     },
-    async addUnits()
+    async addUnits(units_name, prefix_enum, si_enum)
     {
+      console.log('Units Name:', this.units_name);
+      console.log('Selected Prefix:', this.prefix_enum);
+      console.log('Selected Unit:', this.si_enum);
+      // Convert selected enum values to strings
+      const selectedPrefixString = String(this.prefix_enum);
+      const selectedUnitString = String(this.si_enum);
+
       let result = await axios.post("http://localhost:8000/api/edit", {
         edit_type: "add_units",
-        units_name: this.units_name,
+        units_name: units_name,
+        prefix_enum: selectedPrefixString,
+        si_enum: selectedUnitString,
         file: this.xmlData,
         model_name: this.model_name,
         model_id: this.model_id,
       })
-      // Separate the response data into XML and formatted data
+      // Separate the response data into XML, formatted data, and issue list
       const responseText = result.data;
-      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
-      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      } else {
+        console.error('Unexpected response format');
+      }
       xml2js.parseString(this.xmlData, (err, result) => {
         if (err) {
           throw err;
@@ -175,11 +271,17 @@ export default {
         model_id: this.model_id,
       })
         
-      // Separate the response data into XML and formatted data
+      // Separate the response data into XML, formatted data, and issue list
+      const separator = '*separator*';
       const responseText = result.data;
-      console.log(responseText);
-      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
-      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      } else {
+        console.error('Unexpected response format');
+      }
       xml2js.parseString(this.xmlData, (err, result) => {
         if (err) {
           throw err;
@@ -199,11 +301,14 @@ export default {
         file: this.xmlData,
       });
       
-      // Separate the response data into XML and formatted data
+      // Separate the response data into XML, formatted data, and issue list
       const responseText = result.data;
-      console.log(responseText);
-      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
-      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      }
       xml2js.parseString(this.xmlData, (err, result) => {
         if (err) {
           throw err;
@@ -223,11 +328,14 @@ export default {
         file: this.xmlData,
       })
       
-      // Separate the response data into XML and formatted data
+      // Separate the response data into XML, formatted data, and issue list
       const responseText = result.data;
-      console.log(responseText);
-      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
-      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      }
       xml2js.parseString(this.xmlData, (err, result) => {
         if (err) {
           throw err;
@@ -236,6 +344,7 @@ export default {
         const str = JSON.stringify(result, null, 2);
         console.log('js -> %s', str);
       });
+      console.log('')
     },
     async addEquation(componentName, equation)
     {
@@ -246,11 +355,14 @@ export default {
         file: this.xmlData,
       })
       
-      // Separate the response data into XML and formatted data
+      // Separate the response data into XML, formatted data, and issue list
       const responseText = result.data;
-      console.log(responseText);
-      this.xmlData = responseText.substring(0, responseText.indexOf(separator));
-      this.formattedData = responseText.substring(this.xmlData.length + separator.length);
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      }
       xml2js.parseString(this.xmlData, (err, result) => {
         if (err) {
           throw err;

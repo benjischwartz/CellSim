@@ -62,7 +62,7 @@
 		<button @click="addNestedComponent(componentName, parentComponent)">Done</button>
 	</div>
 	<div v-if="showEquationPopup" class="popup"> Add Equation
-		<input type="text" v-model="equation" placeholder="Enter equation" @keydown.enter="addEquation(componentName, equation)">
+		<textarea type="text" v-model="equation" placeholder="Enter equation" @keydown.enter="addEquation(componentName, equation)"></textarea>
 		<button @click="addEquation(componentName, equation)">Done</button>
 	</div>
 </div>
