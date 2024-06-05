@@ -21,32 +21,38 @@
 				<Variable 
 					:name=variable.$.name 
 					:component=component.$.name
+					:units=getUnits()
 					:variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"
+					:inComponentView=true
 					@variable-click="handleVariableClick"
+					@set-units-click="handleSetUnitsClick"
 				/>
+				<div v-if="!showVariableMenu[(component.$.name, variable.$.name)]">
+					hello
+				</div>
 			</div>
 		</div>
 		<!-- Testing menu -->
 		<div class="menu-container">
 			<button @click="toggleMenu(component.$.name)" class="menu-button">. . .</button>
-			<div v-if="showMenu[component.$.name]" class="dropdown-menu">
+			<div v-if="showComponentMenu[component.$.name]" class="dropdown-menu">
 				<button
 					@click="showNestedComponentPopup = true;
 					parentComponent=component.$.name
-					showMenu[component.$.name]=false">
+					showComponentMenu[component.$.name]=false">
 					Add Component
 				</button>
 				<button 
 					@click="showVariablePopup = true;
 					componentName=component.$.name
-					showMenu[component.$.name]=false">
+					showComponentMenu[component.$.name]=false">
 					Add Variable
 				</button>
 				<button @click="action3">Set Name</button>
 				<button 
 					@click="showEquationPopup = true;
 					componentName=component.$.name
-					showMenu[component.$.name]=false">
+					showComponentMenu[component.$.name]=false">
 					Set Equation
 				</button>
 			</div>
@@ -62,7 +68,7 @@
 		<button @click="addNestedComponent(componentName, parentComponent)">Done</button>
 	</div>
 	<div v-if="showEquationPopup" class="popup"> Add Equation
-		<textarea type="text" v-model="equation" placeholder="Enter equation" @keydown.enter="addEquation(componentName, equation)"></textarea>
+		<input type="text" v-model="equation" placeholder="Enter equation" @keydown.enter="addEquation(componentName, equation)">
 		<button @click="addEquation(componentName, equation)">Done</button>
 	</div>
 </div>
@@ -87,7 +93,8 @@ export default {
 			parentComponent: '',
 			variableName: '',
 			equation: '',
-			showMenu: {},
+			showComponentMenu: {},
+			showVariableMenu: {},
 		} 
 	},
 	computed: {
@@ -96,6 +103,11 @@ export default {
 		},
 		components: function() {
 			return this.propData.model.component
+		},
+		units: function() {
+			console.log("units in copmonent view", this.propData.model.units)
+			return this.propData.model.units
+			
 		}
 	},
 	watch: {
@@ -109,13 +121,13 @@ export default {
 	},
 	methods: {
 		initializeToggleMenu() {
-			this.showMenu = {};
+			this.showComponentMenu = {};
 			for (const component of this.components) {
-				this.showMenu[component.$.name] = false;
+				this.showComponentMenu[component.$.name] = false;
 			}
 		},
 		toggleMenu(componentName) {
-			this.showMenu[componentName] = !this.showMenu[componentName];
+			this.showComponentMenu[componentName] = !this.showComponentMenu[componentName];
 		},
 		getMappingsForVariable(variableName, componentName) {
 			let mappings = [];
@@ -146,6 +158,9 @@ export default {
 			}
 			return mappings;
 		},
+		getUnits() {
+			return this.propData.model.units;
+		},
 		initializeIsCollapsed() {
 			this.isCollapsed = {};
 			for (const component of this.components) {
@@ -158,6 +173,10 @@ export default {
 		handleVariableClick(clickedVariableName, parentComponent, variableMappings) {
 			console.log("emitting from ComponentView");
 			this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings);
+		},
+		handleSetUnitsClick(clickedVariableName, parentComponent, unitsName) {
+			this.$emit('set-units-click', clickedVariableName, parentComponent, unitsName)
+
 		},
 		toggleContainerCollapse() {
 			// Toggle the overall container collapse state

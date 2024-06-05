@@ -5,6 +5,18 @@
 	@mouseleave="hideMappings"
 	@click="handleClick">
 	{{ name }}
+	<div v-if="this.inComponentView" class="menu-container">
+		<button @click="toggleMenu" class="menu-button">...</button>
+		<div v-if="showMenu" class="dropdown-menu">
+			<button @click="toggleUnitsMenu">Set Units</button>
+			<div v-if="showUnitsMenu" class ="units-dropdown">
+				<ul>
+					<button v-for="unit in this.units" @click="handleSetUnitsClick(unit.$.name)"> {{ unit.$.name }}</button>
+				</ul>
+			</div>
+			<button>Set Initial Value</button>
+		</div>
+	</div>
 </div>
 </template>
 
@@ -16,9 +28,11 @@ export default {
 	props: {
 		name: String,
 		component: String,
-		units: String,
+		units: Array,
 		variableMappings: Array,
 		highlighted: Array,
+		propData: Object,
+		inComponentView: Boolean,
 	},
 	computed: {
 		isHighlighted() {
@@ -37,7 +51,9 @@ export default {
 	},
 	data() {
 		return {
-			isHovering: false
+			isHovering: false,
+			showMenu: false,
+			showUnitsMenu: false,
 		};
 	},
 	methods: {
@@ -51,7 +67,17 @@ export default {
 		},
 		handleClick() {
 			this.$emit('variable-click', this.name, this.component, this.variableMappings, this.units);
-		}
+		},
+		handleSetUnitsClick(unitsName) {
+			this.$emit('set-units-click', this.name, this.component, unitsName);
+		},
+		toggleMenu() {
+			console.log(this.units)
+			this.showMenu = !this.showMenu;
+		},
+		toggleUnitsMenu() {
+			this.showUnitsMenu = !this.showUnitsMenu;
+		},
 	}
 }
 </script>
@@ -75,6 +101,64 @@ export default {
 
 .arrows line {
   fill: none;
+}
+.menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-button {
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  top: 5px; 
+  right: 5px; 
+  padding: 5px; 
+  font-size: 12px; 
+  border-radius: 3px; 
+}
+
+.dropdown-menu {
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.dropdown-menu button {
+  bottom: 5px; 
+  left: 5px; 
+  padding: 5px;
+  font-size: 12px; 
+  border-radius: 3px
+}
+
+.units-dropdown {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  /* Add your styling here */
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  padding: 8px 12px;
+  cursor: pointer;
+  /* Add your styling here */
+}
+
+li:hover {
+  background-color: #f0f0f0;
 }
 	
 </style>
