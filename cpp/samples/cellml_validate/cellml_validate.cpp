@@ -254,8 +254,13 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
               std::cout << "Extracted prefix enum is... " << prefix_enum << std::endl;
               int si_enum = std::stoi(mg_json_get_str(hm->body, "$.si_enum"));
               std::cout << "Extracted si enum is... " << si_enum << std::endl;
+              double exponent, multiplier;
+              mg_json_get_num(hm->body, "$.exponent", &exponent);
+              mg_json_get_num(hm->body, "$.multiplier", &multiplier);
+              std::cout << "Extracted exponent is... " << exponent << std::endl;
+              std::cout << "Extracted multiplierr is... " << multiplier << std::endl;
               auto new_unit = libcellml::Units::create(units_name);
-              new_unit->addUnit(libcellml::Units::StandardUnit(si_enum), libcellml::Units::Prefix(prefix_enum));
+              new_unit->addUnit(libcellml::Units::StandardUnit(si_enum), libcellml::Units::Prefix(prefix_enum), exponent, multiplier);
               local_model->addUnits(new_unit);
               auto printer = libcellml::Printer::create();
               result = printer->printModel(local_model);
@@ -283,6 +288,41 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
           } 
           // REMOVE UNITS          
           else if (edit_type.compare("remove_unit") == 0) {
+          } 
+          // SET UNITS FOR A VARIABLE 
+          else if (edit_type.compare("set_units") == 0) {
+            std::string component_name = mg_json_get_str(hm->body, "$.component_name");
+            std::cout << "Extracted component name is... " << component_name << std::endl;
+            std::string variable_name = mg_json_get_str(hm->body, "$.variable_name");
+            std::cout << "variable name: " << variable_name << std::endl;
+            std::string units_name = mg_json_get_str(hm->body, "$.units_name");
+            std::cout << "units name: " << units_name << std::endl;
+            auto component = local_model->component(component_name);
+            std::cout << "in edit, printing local model...\n";
+            printModel(local_model, true);
+            auto printer = libcellml::Printer::create();
+            result = printer->printModel(local_model);
+            std::string visualised_str = create_visualised_string(local_model);
+            // Create validator
+            auto validator = libcellml::Validator::create();
+            validator->validateModel(local_model);
+
+            // Retrieve number of issues from validator
+            size_t numIssues = validator->issueCount();
+            std::string issueList = create_issue_list(validator);
+
+
+            mg_printf(c, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
+                        "Transfer-Encoding: chunked\r\n"
+                        "Access-Control-Allow-Headers: content-type\r\n"
+                        "Access-Control-Request-Method: POST\r\n"
+                        "Access-Control-Allow-Origin: http://localhost:5173\r\n\r\n");
+            mg_http_printf_chunk(c, "%s", result.c_str());
+            mg_http_printf_chunk(c, "%s", "*separator*");
+            mg_http_printf_chunk(c, "%s", visualised_str.c_str());
+            mg_http_printf_chunk(c, "%s", "*separator*");
+            mg_http_printf_chunk(c, "{\"Number of issues\": %d, \"Issue List\": %s}", numIssues, issueList.c_str());
+            mg_http_printf_chunk(c, "");
           } 
           // ADD PARENT COMPONENT 
           else if (edit_type.compare("add_component") == 0) {
@@ -440,7 +480,7 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
           mg_http_printf_chunk(c, "%s", "*separator*");
           mg_http_printf_chunk(c, "%s", visualised_str.c_str());
           mg_http_printf_chunk(c, "");  // Don't forget the last empty chunk
-    } else if (mg_http_match_uri(hm, "/api/getEquation")) {
+        } else if (mg_http_match_uri(hm, "/api/getEquation")) {
           // Extract model name and id
           struct mg_str data = hm->body;
           std::cout << "in get equation, data is: " << data.ptr << std::endl;

@@ -20,6 +20,7 @@
       @add-nested-component="addNestedComponent"
       @add-variable="addVariable"
       @add-equation="addEquation"
+      @set-units-click="setUnits"
     /> </div>
 
     <div v-if="this.jsData && encapsulation">
@@ -74,7 +75,9 @@
         </option>
       </select>
       <br />
-      <button @click="addUnits(units_name, prefix_enum, si_enum)">Add</button><br /><br />
+      <input type="text" name="exponent" v-model="exponent" placeholder="Exponent" /> <br /> 
+      <input type="text" name="multiplier" v-model="multiplier" placeholder="Multiplier" /> <br /> 
+      <button @click="addUnits(units_name)">Add</button><br /><br />
     </div>
     <button @click="showComponentInput=true">Add Component</button> <br />
     <div v-if="showComponentInput">
@@ -175,6 +178,8 @@ export default {
         'WATT',
         'WEBER'
       ],
+      exponent: '',
+      multiplier: '',
     };
   },
   computed: {
@@ -185,6 +190,11 @@ export default {
       // TODO: Update this with connections
       //return this.jsData.model.connection;
       return []
+    },
+    units: function() {
+      // TODO: Update this with connections
+      //return this.jsData.model.connection;
+      return this.jsData.model.units;
     },
     encapsulation: function() {
       return this.jsData.model.encapsulation;
@@ -222,11 +232,21 @@ export default {
         console.log('js -> %s', str);
       });
     },
-    async addUnits(units_name, prefix_enum, si_enum)
+    async addUnits(units_name)
     {
       console.log('Units Name:', this.units_name);
       console.log('Selected Prefix:', this.prefix_enum);
       console.log('Selected Unit:', this.si_enum);
+      let exp = parseFloat(this.exponent);
+      if (isNaN(exp)) {
+        exp = 1.0
+      }
+      let mul = parseFloat(this.multiplier);
+      if (isNaN(mul)) {
+        mul = 1.0
+      }
+      console.log('Exponent: ', exp);
+      console.log('Multiplier:', mul);
       // Convert selected enum values to strings
       const selectedPrefixString = String(this.prefix_enum);
       const selectedUnitString = String(this.si_enum);
@@ -236,6 +256,39 @@ export default {
         units_name: units_name,
         prefix_enum: selectedPrefixString,
         si_enum: selectedUnitString,
+        file: this.xmlData,
+        model_name: this.model_name,
+        model_id: this.model_id,
+        exponent: exp,
+        multiplier: mul,
+      })
+      // Separate the response data into XML, formatted data, and issue list
+      const responseText = result.data;
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      } else {
+        console.error('Unexpected response format');
+      }
+      xml2js.parseString(this.xmlData, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.jsData = result;
+        const str = JSON.stringify(result, null, 2);
+        console.log('js -> %s', str);
+      });
+      this.showUnitsInput = false;
+    },
+    async setUnits(componentName, variableName, unitsName)
+    {
+      let result = await axios.post("http://localhost:8000/api/edit", {
+        edit_type: "set_units",
+        units_name: unitsName,
+        component_name : componentName,
+        variable_name: variableName,
         file: this.xmlData,
         model_name: this.model_name,
         model_id: this.model_id,
