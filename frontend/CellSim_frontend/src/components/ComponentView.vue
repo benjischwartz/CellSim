@@ -24,11 +24,12 @@
 					:units=getUnits()
 					:variableMappings="getMappingsForVariable(variable.$.name, component.$.name)"
 					:inComponentView=true
+					:propData=this.propData
 					@variable-click="handleVariableClick"
 					@set-units-click="handleSetUnitsClick"
+					@set-initial-value-click="handleSetInitialValueClick"
 				/>
 				<div v-if="!showVariableMenu[(component.$.name, variable.$.name)]">
-					hello
 				</div>
 			</div>
 		</div>
@@ -68,7 +69,7 @@
 		<button @click="addNestedComponent(componentName, parentComponent)">Done</button>
 	</div>
 	<div v-if="showEquationPopup" class="popup"> Add Equation
-		<input type="text" v-model="equation" placeholder="Enter equation" @keydown.enter="addEquation(componentName, equation)">
+		<textarea v-model="equation" placeholder="Enter equation" @keydown.enter="addEquation(componentName, equation)"></textarea>
 		<button @click="addEquation(componentName, equation)">Done</button>
 	</div>
 </div>
@@ -104,11 +105,6 @@ export default {
 		components: function() {
 			return this.propData.model.component
 		},
-		units: function() {
-			console.log("units in copmonent view", this.propData.model.units)
-			return this.propData.model.units
-			
-		}
 	},
 	watch: {
 		components: {
@@ -174,9 +170,11 @@ export default {
 			console.log("emitting from ComponentView");
 			this.$emit('variable-click', clickedVariableName, parentComponent, variableMappings);
 		},
-		handleSetUnitsClick(clickedVariableName, parentComponent, unitsName) {
-			this.$emit('set-units-click', clickedVariableName, parentComponent, unitsName)
-
+		handleSetUnitsClick(parentComponent, clickedVariableName, unitsName) {
+			this.$emit('set-units-click', parentComponent, clickedVariableName, unitsName)
+		},
+		handleSetInitialValueClick(parentComponent, clickedVariableName, initialValue) {
+			this.$emit('set-initial-value-click', parentComponent, clickedVariableName, initialValue)
 		},
 		toggleContainerCollapse() {
 			// Toggle the overall container collapse state
@@ -188,7 +186,6 @@ export default {
 			}
 		},
 		addComponent(componentName) {
-			console.log('Component name:', this.componentName);
 			this.showComponentPopup = false;
 			this.componentName = '';
 			this.$emit("add-component", componentName);

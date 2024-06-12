@@ -21,6 +21,7 @@
       @add-variable="addVariable"
       @add-equation="addEquation"
       @set-units-click="setUnits"
+      @set-initial-value-click="setInitialValue"
     /> </div>
 
     <div v-if="this.jsData && encapsulation">
@@ -88,7 +89,7 @@
     <button @click="exportXML()">Export </button> <br />
   </div>
   <br /><br />
-  <div v-if="issueList"> <h2> Issue List: </h2> <br /> {{ issueList }}</div>
+  <div v-if="issueList"> <h2> Issue List: </h2> <br /> <pre>{{ issueList }}</pre></div>
 
 
 </template>
@@ -287,6 +288,39 @@ export default {
       let result = await axios.post("http://localhost:8000/api/edit", {
         edit_type: "set_units",
         units_name: unitsName,
+        component_name : componentName,
+        variable_name: variableName,
+        file: this.xmlData,
+        model_name: this.model_name,
+        model_id: this.model_id,
+      })
+      // Separate the response data into XML, formatted data, and issue list
+      const responseText = result.data;
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      } else {
+        console.error('Unexpected response format');
+      }
+      xml2js.parseString(this.xmlData, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.jsData = result;
+        const str = JSON.stringify(result, null, 2);
+        console.log('js -> %s', str);
+      });
+      this.showUnitsInput = false;
+    },
+    async setInitialValue(componentName, variableName, initialValue)
+    {
+      console.log("initial val is", initialValue);
+      let init_val = parseFloat(initialValue);
+      let result = await axios.post("http://localhost:8000/api/edit", {
+        edit_type: "set_initial_value",
+        initial_value: init_val,
         component_name : componentName,
         variable_name: variableName,
         file: this.xmlData,
