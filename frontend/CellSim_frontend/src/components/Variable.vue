@@ -11,10 +11,20 @@
 			<button @click="toggleUnitsMenu">Set Units</button>
 			<div v-if="showUnitsMenu" class ="units-dropdown">
 				<ul>
-					<button v-for="unit in this.units" @click="handleSetUnitsClick(unit.$.name)"> {{ unit.$.name }}</button>
+					<button v-for="unit in allUnits" @click="handleSetUnitsClick(unit.$.name)"> {{ unit.$.name }}</button>
 				</ul>
 			</div>
-			<button>Set Initial Value</button>
+			<button @click="toggleInitialValueMenu">Set Initial Value</button>
+			<div v-if="showInitialValueMenu">
+				<input type="text" name="initial_value" v-model="initial_value" placeholder="Initial Value" />
+				<button @click="handleSetInitialValueClick(initial_value)">Set</button>
+			</div>
+			<button @click="toggleEquivComponentsMenu">Add Equivalence</button>
+			<div v-if="showEquivComponentsMenu" class="units-dropdown">
+				<ul>
+					<button v-for="component in allComponents"> {{ component.$.name }}</button>
+				</ul>
+			</div>
 		</div>
 	</div>
 </div>
@@ -45,6 +55,18 @@ export default {
 		coords() {
 			return this.getPosition();
 		},
+		allUnits() {
+			let myUnits = this.units;
+			myUnits.push({
+				"$": {
+				"name": "dimensionless"
+				},
+			});
+			return myUnits;
+		},
+		allComponents() {
+			return this.propData.model.component
+		},
 	},
 	components: {
 		VariableMapping
@@ -54,6 +76,9 @@ export default {
 			isHovering: false,
 			showMenu: false,
 			showUnitsMenu: false,
+			showInitialValueMenu: false,
+			showEquivComponentsMenu: false,
+			showEquivVariablesMenu: false,
 		};
 	},
 	methods: {
@@ -69,7 +94,15 @@ export default {
 			this.$emit('variable-click', this.name, this.component, this.variableMappings, this.units);
 		},
 		handleSetUnitsClick(unitsName) {
-			this.$emit('set-units-click', this.name, this.component, unitsName);
+			this.showMenu = false;
+			this.showUnitsMenu = false;
+			this.$emit('set-units-click', this.component, this.name, unitsName);
+		},
+		handleSetInitialValueClick(initialValue) {
+			this.showMenu = false;
+			this.showUnitsMenu = false;
+			this.showInitialValueMenu = false;
+			this.$emit('set-initial-value-click', this.component, this.name, initialValue);
 		},
 		toggleMenu() {
 			console.log(this.units)
@@ -78,6 +111,15 @@ export default {
 		toggleUnitsMenu() {
 			this.showUnitsMenu = !this.showUnitsMenu;
 		},
+		toggleInitialValueMenu() {
+			this.showInitialValueMenu = !this.showInitialValueMenu;			
+		},
+		toggleEquivComponentsMenu() {
+			this.showEquivComponentsMenu = !this.showEquivComponentsMenu;			
+		},
+		toggleEquivVariablesMenu() {
+			this.showEquivVariablesMenu = !this.showEquivVariablesMenu;			
+		}
 	}
 }
 </script>
