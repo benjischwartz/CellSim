@@ -22,9 +22,25 @@
 			<button @click="toggleEquivComponentsMenu">Add Equivalence</button>
 			<div v-if="showEquivComponentsMenu" class="units-dropdown">
 				<ul>
-					<button v-for="component in allComponents"> {{ component.$.name }}</button>
+					<button v-for="c in this.propData.model.component" @click="toggleEquivVariablesMenu(c.$.name)"> 
+						{{ c.$.name }}
+						<div v-if="showEquivVariablesMenu[c.$.name]" class="units-dropdown">
+							<ul>
+								<button v-for="v in c.variable" @click="handleSetEquivalenceClick(c.$.name, v.$.name)"> 
+									{{ v.$.name }}
+								</button>
+							</ul>
+						</div>
+					</button>
 				</ul>
 			</div>
+			<button @click="toggleInterfaceTypeMenu">Set Interface Type
+				<div v-if="showInterfaceTypeMenu" class="units-dropdown">
+					<button @click="handleSetInterfaceTypeClick('public')">Public</button>
+					<button @click="handleSetInterfaceTypeClick('private')">Private</button>
+					<button @click="handleSetInterfaceTypeClick('public_and_private')">Public and Private</button>
+				</div>
+			</button>
 		</div>
 	</div>
 </div>
@@ -56,7 +72,10 @@ export default {
 			return this.getPosition();
 		},
 		allUnits() {
-			let myUnits = this.units;
+			let myUnits = [];
+			if (this.units) {
+				myUnits = this.units;
+			}
 			myUnits.push({
 				"$": {
 				"name": "dimensionless"
@@ -64,8 +83,13 @@ export default {
 			});
 			return myUnits;
 		},
-		allComponents() {
-			return this.propData.model.component
+	},
+	watch: {
+		propData: {
+			handler() {
+				this.updateShowEquivVariablesMenu();
+			},
+			immediate: true,
 		},
 	},
 	components: {
@@ -78,8 +102,12 @@ export default {
 			showUnitsMenu: false,
 			showInitialValueMenu: false,
 			showEquivComponentsMenu: false,
-			showEquivVariablesMenu: false,
+			showEquivVariablesMenu: {},
+			showInterfaceTypeMenu: false,
 		};
+	},
+	created() {
+		this.updateShowEquivVariablesMenu();
 	},
 	methods: {
 		showMappings() {
@@ -89,6 +117,13 @@ export default {
 		hideMappings() {
 			this.isHovering = false;
 			this.$emit('variable-hover', null, null);
+		},
+		updateShowEquivVariablesMenu() {
+			if (this.propData) {
+				this.propData.model.component.forEach(component => {
+					this.showEquivVariablesMenu[component.$.name] =false;
+				});
+			}
 		},
 		handleClick() {
 			this.$emit('variable-click', this.name, this.component, this.variableMappings, this.units);
@@ -104,6 +139,17 @@ export default {
 			this.showInitialValueMenu = false;
 			this.$emit('set-initial-value-click', this.component, this.name, initialValue);
 		},
+		handleSetEquivalenceClick(target_component, target_variable) {
+			this.showEquivComponentsMenu = false;
+			this.showMenu = false;
+			this.updateShowEquivVariablesMenu();
+			this.$emit('set-equivalence-click', this.component, target_component, this.name, target_variable);
+		},
+		handleSetInterfaceTypeClick(interface_type) {
+			this.showInterfaceTypeMenu = false;
+			this.showMenu = false;
+			this.$emit('set-interface-type-click', this.component, this.name, interface_type);
+		},
 		toggleMenu() {
 			console.log(this.units)
 			this.showMenu = !this.showMenu;
@@ -117,9 +163,13 @@ export default {
 		toggleEquivComponentsMenu() {
 			this.showEquivComponentsMenu = !this.showEquivComponentsMenu;			
 		},
-		toggleEquivVariablesMenu() {
-			this.showEquivVariablesMenu = !this.showEquivVariablesMenu;			
-		}
+		toggleEquivVariablesMenu(componentName) {
+			console.log("toggling equiv")
+			this.showEquivVariablesMenu[componentName] = !this.showEquivVariablesMenu[componentName];
+		},
+		toggleInterfaceTypeMenu() {
+			this.showInterfaceTypeMenu = !this.showInterfaceTypeMenu;			
+		},
 	}
 }
 </script>

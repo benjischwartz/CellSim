@@ -396,6 +396,104 @@ static void fn(struct mg_connection *c, int ev, void *ev_data, void *fn_data)
             mg_http_printf_chunk(c, "Analyser issue List: %s", analyserIssueList.c_str());
             mg_http_printf_chunk(c, "");  // Don't forget the last empty chunk
           } 
+          // SET EQUIVALENCE BETWEEN VARIABLES 
+          else if (edit_type.compare("set_equivalence") == 0) {
+            std::string component_1 = mg_json_get_str(hm->body, "$.component_1");
+            std::string component_2 = mg_json_get_str(hm->body, "$.component_2");
+            std::string variable_1 = mg_json_get_str(hm->body, "$.variable_1");
+            std::string variable_2 = mg_json_get_str(hm->body, "$.variable_2");
+            std::cout << "Extracted component 1 is... " << component_1 << std::endl;
+            std::cout << "Extracted component 2 is... " << component_2 << std::endl;
+            std::cout << "Extracted variable 1 is... " << variable_1 << std::endl;
+            std::cout << "Extracted variable 2 is... " << variable_2 << std::endl;
+
+            auto c1 = local_model->component(component_1);
+            auto c2 = local_model->component(component_2);
+            libcellml::Variable::addEquivalence(c1->variable(variable_1), c2->variable(variable_2));
+
+            // Fix variable interfaces
+            local_model->fixVariableInterfaces();
+
+            std::cout << "in edit, printing local model...\n";
+            printModel(local_model, true);
+            auto printer = libcellml::Printer::create();
+            result = printer->printModel(local_model);
+            std::string visualised_str = create_visualised_string(local_model);
+            // Create validator
+            auto validator = libcellml::Validator::create();
+            validator->validateModel(local_model);
+
+            // Create analyser
+            auto analyser = libcellml::Analyser::create();
+            analyser->analyseModel(local_model);
+
+            // Retrieve number of issues from validator
+            size_t numIssues = validator->issueCount();
+            std::string validatorIssueList = create_issue_list(validator);
+
+            std::string analyserIssueList = create_issue_list(analyser);
+
+            // Send chunked JSON response
+            mg_printf(c, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
+                        "Transfer-Encoding: chunked\r\n"
+                        "Access-Control-Allow-Headers: content-type\r\n"
+                        "Access-Control-Request-Method: POST\r\n"
+                        "Access-Control-Allow-Origin: http://localhost:5173\r\n\r\n");
+            mg_http_printf_chunk(c, "%s", result.c_str());
+            mg_http_printf_chunk(c, "%s", "*separator*");
+            mg_http_printf_chunk(c, "%s", visualised_str.c_str());
+            mg_http_printf_chunk(c, "%s", "*separator*");
+            mg_http_printf_chunk(c, "Number of issues: %d, \n Validator issue List: %s", numIssues, validatorIssueList.c_str());
+            mg_http_printf_chunk(c, "Analyser issue List: %s", analyserIssueList.c_str());
+            mg_http_printf_chunk(c, "");  // Don't forget the last empty chunk
+          } 
+          // SET INTERFACE TYPE OF VARIABLE
+          else if (edit_type.compare("set_interface_type") == 0) {
+            std::string component_name = mg_json_get_str(hm->body, "$.component_name");
+            std::string variable_name = mg_json_get_str(hm->body, "$.variable_name");
+            std::string interface_type = mg_json_get_str(hm->body, "$.interface_type");
+            std::cout << "Extracted component is... " << component_name << std::endl;
+            std::cout << "Extracted variable is... " << variable_name << std::endl;
+            std::cout << "Extracted interface type is... " << interface_type << std::endl;
+
+            local_model->component(component_name)->variable(variable_name)->setInterfaceType(interface_type);
+
+            // Fix variable interfaces
+            local_model->fixVariableInterfaces();
+
+            std::cout << "in edit, printing local model...\n";
+            printModel(local_model, true);
+            auto printer = libcellml::Printer::create();
+            result = printer->printModel(local_model);
+            std::string visualised_str = create_visualised_string(local_model);
+            // Create validator
+            auto validator = libcellml::Validator::create();
+            validator->validateModel(local_model);
+
+            // Create analyser
+            auto analyser = libcellml::Analyser::create();
+            analyser->analyseModel(local_model);
+
+            // Retrieve number of issues from validator
+            size_t numIssues = validator->issueCount();
+            std::string validatorIssueList = create_issue_list(validator);
+
+            std::string analyserIssueList = create_issue_list(analyser);
+
+            // Send chunked JSON response
+            mg_printf(c, "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n"
+                        "Transfer-Encoding: chunked\r\n"
+                        "Access-Control-Allow-Headers: content-type\r\n"
+                        "Access-Control-Request-Method: POST\r\n"
+                        "Access-Control-Allow-Origin: http://localhost:5173\r\n\r\n");
+            mg_http_printf_chunk(c, "%s", result.c_str());
+            mg_http_printf_chunk(c, "%s", "*separator*");
+            mg_http_printf_chunk(c, "%s", visualised_str.c_str());
+            mg_http_printf_chunk(c, "%s", "*separator*");
+            mg_http_printf_chunk(c, "Number of issues: %d, \n Validator issue List: %s", numIssues, validatorIssueList.c_str());
+            mg_http_printf_chunk(c, "Analyser issue List: %s", analyserIssueList.c_str());
+            mg_http_printf_chunk(c, "");  // Don't forget the last empty chunk
+          } 
           // ADD PARENT COMPONENT 
           else if (edit_type.compare("add_component") == 0) {
                 std::string component_name = mg_json_get_str(hm->body, "$.component_name");
