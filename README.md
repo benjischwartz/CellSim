@@ -3,7 +3,7 @@
 ## Visualise and Flatten Model Functionality
 
 ![cellml_visualise.gif](images/cellml_visualise.gif)
-<img src="images/cellml_visualise.gif" alt="cellml_visualise" style="width:100%;">
+<img src="images/cellml_visualise.gif" alt="cellml_visualise" width="1000">
 
 ## Create Model Functionality
 
