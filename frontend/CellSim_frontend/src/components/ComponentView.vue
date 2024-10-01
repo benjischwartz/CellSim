@@ -28,6 +28,8 @@
 					@variable-click="handleVariableClick"
 					@set-units-click="handleSetUnitsClick"
 					@set-initial-value-click="handleSetInitialValueClick"
+					@set-equivalence-click="handleSetEquivalenceClick"
+					@set-interface-type-click="handleSetInterfaceTypeClick"
 				/>
 				<div v-if="!showVariableMenu[(component.$.name, variable.$.name)]">
 				</div>
@@ -175,6 +177,12 @@ export default {
 		},
 		handleSetInitialValueClick(parentComponent, clickedVariableName, initialValue) {
 			this.$emit('set-initial-value-click', parentComponent, clickedVariableName, initialValue)
+		},
+		handleSetEquivalenceClick(component_1, component_2, variable_1, variable_2) {
+			this.$emit('set-equivalence-click', component_1, component_2, variable_1, variable_2)
+		},
+		handleSetInterfaceTypeClick(component_name, variable_name, interface_type) {
+			this.$emit('set-interface-type-click', component_name, variable_name, interface_type)
 		},
 		toggleContainerCollapse() {
 			// Toggle the overall container collapse state

@@ -9,9 +9,12 @@
   },
   "dependencies": {
     "@dongivan/mathjax-vuewer": "^0.1.2",
+    "@mdi/font": "^7.4.47",
+    "@wiris/mathtype-ckeditor5": "^8.9.0",
     "axios": "^1.5.1",
     "d3": "^7.8.5",
     "events": "^3.3.0",
+    "express": "^4.19.2",
     "json-tree-view": "^0.4.12",
     "mathjax": "^3.2.2",
     "mathjax-full": "^3.2.2",
@@ -27,6 +30,7 @@
     "vue-router": "^4.2.5",
     "vue-tree-chart": "^1.2.9",
     "vued3tree": "^5.1.0",
+    "vuetify": "^3.6.0-beta.0.0",
     "xml2js": "^0.6.2",
     "xml2json": "^0.7.1"
   },

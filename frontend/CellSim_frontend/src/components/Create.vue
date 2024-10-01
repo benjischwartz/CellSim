@@ -9,8 +9,13 @@
 
   <!-- Display the result data in a panel -->
   <div v-if="xmlData">
-    <h2> {{ model_name }}</h2>
+    <h1> {{ model_name }}</h1>
+    <h2> {{ "Raw Data" }}</h2>
+    <textarea name="xmlData" v-model="xmlData" placeholder="Raw cellml goes here" class="upload-section"></textarea> 
+    <br /><br />
+    <h2> {{ "Formatted Data" }}</h2>
     <pre>{{ formattedData }}</pre>
+    <br /><br />
 
     <div v-if="jsData.model.component">
     <h2>Component View</h2>
@@ -22,6 +27,8 @@
       @add-equation="addEquation"
       @set-units-click="setUnits"
       @set-initial-value-click="setInitialValue"
+      @set-equivalence-click="setEquivalence"
+      @set-interface-type-click="setInterfaceType"
     /> </div>
 
     <div v-if="this.jsData && encapsulation">
@@ -323,6 +330,69 @@ export default {
         initial_value: init_val,
         component_name : componentName,
         variable_name: variableName,
+        file: this.xmlData,
+        model_name: this.model_name,
+        model_id: this.model_id,
+      })
+      // Separate the response data into XML, formatted data, and issue list
+      const responseText = result.data;
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      } else {
+        console.error('Unexpected response format');
+      }
+      xml2js.parseString(this.xmlData, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.jsData = result;
+        const str = JSON.stringify(result, null, 2);
+        console.log('js -> %s', str);
+      });
+      this.showUnitsInput = false;
+    },
+    async setEquivalence(component_1, component_2, variable_1, variable_2)
+    {
+      let result = await axios.post("http://localhost:8000/api/edit", {
+        edit_type: "set_equivalence",
+        component_1: component_1,
+        component_2: component_2,
+        variable_1: variable_1,
+        variable_2: variable_2,
+        file: this.xmlData,
+        model_name: this.model_name,
+        model_id: this.model_id,
+      })
+      // Separate the response data into XML, formatted data, and issue list
+      const responseText = result.data;
+      const parts = responseText.split(separator);
+      if (parts.length === 3) {
+        this.xmlData = parts[0];
+        this.formattedData = parts[1];
+        this.issueList = parts[2];
+      } else {
+        console.error('Unexpected response format');
+      }
+      xml2js.parseString(this.xmlData, (err, result) => {
+        if (err) {
+          throw err;
+        }
+        this.jsData = result;
+        const str = JSON.stringify(result, null, 2);
+        console.log('js -> %s', str);
+      });
+      this.showUnitsInput = false;
+    },
+    async setInterfaceType(component_name, variable_name, interface_type)
+    {
+      let result = await axios.post("http://localhost:8000/api/edit", {
+        edit_type: "set_interface_type",
+        component_name: component_name,
+        variable_name: variable_name,
+        interface_type: interface_type,
         file: this.xmlData,
         model_name: this.model_name,
         model_id: this.model_id,
