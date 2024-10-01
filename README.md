@@ -2,14 +2,11 @@
 
 ## Visualise and Flatten Model Functionality
 
-![cellml_visualise.gif](images/cellml_visualise.gif)
-<img src="images/cellml_visualise.gif" alt="cellml_visualise" width="1000">
+![cellml_visualise2.gif](images/cellml_visualis2.gif)
 
 ## Create Model Functionality
 
 ![cellml_create.gif](images/cellml_create.gif)
-<img src="images/cellml_create.gif" alt="cellml_create" style="width:100%;">
-
 
 ## System Design
 
