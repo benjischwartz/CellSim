@@ -1,5 +1,12 @@
 # CellML Project
 
+## Create Model Functionality
+
+![cellml_create.gif](images/cellml_create.gif)
+
+## Visualise and Flatten Model Functionality
+
+![cellml_visualise.gif](images/cellml_visualise.gif)
 
 ## System Design
 
