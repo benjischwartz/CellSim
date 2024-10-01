@@ -2,7 +2,7 @@
 
 ## Visualise and Flatten Model Functionality
 
-![cellml_visualise2.gif](images/cellml_visualis2.gif)
+![cellml_visualise2.gif](images/cellml_visualise2.gif)
 
 ## Create Model Functionality
 
